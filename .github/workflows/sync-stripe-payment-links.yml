@@ -5,13 +5,22 @@
 # Required secret:
 #   STRIPE_SECRET_KEY   sk_test_... or sk_live_...
 #
-# Optional variable/secret:
+# Optional variable:
 #   SITE_URL            default https://delawarecanvasart.com
+#
+# Switching from test → live (or reverse): re-run this workflow. Links from
+# the other mode are discarded automatically. Use force_resync to recreate all.
 
 name: Sync Stripe payment links
 
 on:
   workflow_dispatch:
+    inputs:
+      force_resync:
+        description: Recreate all Payment Links even if mode matches
+        required: false
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
@@ -39,7 +48,14 @@ jobs:
             exit 1
           fi
           case "$STRIPE_SECRET_KEY" in
-            sk_test_*|sk_live_*) echo "Stripe Secret key is configured." ;;
+            sk_test_*)
+              echo "Stripe Secret key is configured (TEST mode)."
+              echo "STRIPE_MODE=test" >> "$GITHUB_ENV"
+              ;;
+            sk_live_*)
+              echo "Stripe Secret key is configured (LIVE mode)."
+              echo "STRIPE_MODE=live" >> "$GITHUB_ENV"
+              ;;
             *)
               echo "::error::STRIPE_SECRET_KEY must start with sk_test_ or sk_live_."
               exit 1
@@ -50,6 +66,7 @@ jobs:
         env:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           SITE_URL: ${{ vars.SITE_URL }}
+          FORCE_RESYNC: ${{ inputs.force_resync && '1' || '0' }}
         run: node .github/scripts/sync-stripe-payment-links.mjs
 
       - name: Commit generated links
@@ -60,6 +77,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No payment-link changes to commit."
           else
-            git commit -m "Sync Stripe Payment Links from GitHub Secrets"
+            git commit -m "Sync Stripe Payment Links from GitHub Secrets (${STRIPE_MODE:-unknown} mode)"
             git push
           fi
