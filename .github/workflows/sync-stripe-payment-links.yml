@@ -1,0 +1,65 @@
+# Reads STRIPE_SECRET_KEY from GitHub Secrets, creates Stripe Payment Links
+# for each product × size (name, size, price), and commits the generated
+# links file for the static GitHub Pages site.
+#
+# Required secret:
+#   STRIPE_SECRET_KEY   sk_test_... or sk_live_...
+#
+# Optional variable/secret:
+#   SITE_URL            default https://delawarecanvasart.com
+
+name: Sync Stripe payment links
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "assets/js/products.js"
+      - ".github/scripts/sync-stripe-payment-links.mjs"
+      - ".github/workflows/sync-stripe-payment-links.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Create Payment Links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Stripe secret
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: |
+          if [ -z "$STRIPE_SECRET_KEY" ]; then
+            echo "::error::Add repository secret STRIPE_SECRET_KEY (sk_test_... or sk_live_...)."
+            exit 1
+          fi
+          case "$STRIPE_SECRET_KEY" in
+            sk_test_*|sk_live_*) echo "Stripe Secret key is configured." ;;
+            *)
+              echo "::error::STRIPE_SECRET_KEY must start with sk_test_ or sk_live_."
+              exit 1
+              ;;
+          esac
+
+      - name: Sync Payment Links with Stripe
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: node .github/scripts/sync-stripe-payment-links.mjs
+
+      - name: Commit generated links
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/js/stripe-links.generated.js
+          if git diff --staged --quiet; then
+            echo "No payment-link changes to commit."
+          else
+            git commit -m "Sync Stripe Payment Links from GitHub Secrets"
+            git push
+          fi

@@ -1,11 +1,11 @@
 /**
  * Product catalog — four canvas sizes per print.
  *
- * Preferred checkout: GitHub Secret STRIPE_SECRET_KEY → Action deploys Worker →
- * Purchase posts { name, size, price } to checkoutEndpoint (see config.js).
+ * Checkout: store STRIPE_SECRET_KEY in GitHub Secrets, then run Action
+ * "Sync Stripe payment links". That writes Payment Links (with name, size,
+ * price) into stripe-links.generated.js — no Cloudflare or other host.
  *
- * Optional fallback: paste a Stripe Payment Link into stripe.SIZE.stripePaymentLink
- * if the Worker endpoint is not configured yet.
+ * Optional manual fallback: paste a link into stripe.SIZE.stripePaymentLink.
  */
 window.DCA_CANVAS_SIZES = [
   {
@@ -121,20 +121,3 @@ window.DCA_PRODUCTS = [
     stripe: dcaEmptySizeLinks()
   }
 ];
-
-/**
- * Payload for the secrets-backed checkout Worker / GitHub Action script.
- * price is USD dollars; the server converts to cents for Stripe.
- */
-window.DCA_checkoutPayload = function (product, size) {
-  if (!product || !size) return null;
-  return {
-    name: product.title,
-    size: size.label,
-    price: size.price,
-    productId: product.id,
-    sizeId: size.id,
-    medium: product.medium || "",
-    description: product.description || ""
-  };
-};
