@@ -7,7 +7,6 @@
       path = path.slice(0, path.lastIndexOf("/"));
     }
     var parts = path.split("/").filter(Boolean);
-    // Detect gallery subdirectory
     if (parts[parts.length - 1] === "gallery" || parts.indexOf("gallery") !== -1) {
       return "../";
     }
@@ -26,7 +25,6 @@
     var page = currentPage();
     var path = window.location.pathname;
     if (hrefFile === "index.html" && (page === "index.html" || path.endsWith("/"))) {
-      // Home only when not under gallery/
       if (path.indexOf("/gallery") === -1) return " active";
       return "";
     }
@@ -116,7 +114,31 @@
   }
 
   function formatPrice(n) {
-    return "$" + Number(n).toFixed(0);
+    var value = Number(n);
+    var fixed = value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
+    return "$" + fixed;
+  }
+
+  function getCanvasSizes() {
+    return window.DCA_CANVAS_SIZES || [];
+  }
+
+  function getSizeById(sizeId) {
+    var sizes = getCanvasSizes();
+    for (var i = 0; i < sizes.length; i++) {
+      if (sizes[i].id === sizeId) return sizes[i];
+    }
+    return sizes[0] || null;
+  }
+
+  function getStartingPrice() {
+    var sizes = getCanvasSizes();
+    if (!sizes.length) return 0;
+    var min = sizes[0].price;
+    for (var i = 1; i < sizes.length; i++) {
+      if (sizes[i].price < min) min = sizes[i].price;
+    }
+    return min;
   }
 
   function getProductById(id) {
@@ -127,6 +149,19 @@
     return null;
   }
 
+  function getStripeForSize(product, sizeId) {
+    if (!product || !product.stripe) return { stripePaymentLink: "", stripePriceId: "" };
+    return product.stripe[sizeId] || { stripePaymentLink: "", stripePriceId: "" };
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
   function renderGalleryGrid(targetId, limit) {
     var el = document.getElementById(targetId);
     if (!el || !window.DCA_PRODUCTS) return;
@@ -134,6 +169,8 @@
     var products = window.DCA_PRODUCTS.slice(0, limit || window.DCA_PRODUCTS.length);
     var imgBase = base + "assets/images/art/";
     var linkBase = base + "gallery/";
+    var fromPrice = formatPrice(getStartingPrice());
+    var sizeCount = getCanvasSizes().length;
 
     el.innerHTML = products
       .map(function (p) {
@@ -147,19 +184,19 @@
           imgBase +
           p.image +
           '" alt="' +
-          p.title +
+          escapeHtml(p.title) +
           '" loading="lazy" width="800" height="600">' +
           "</div>" +
           "<h3>" +
-          p.title +
+          escapeHtml(p.title) +
           "</h3>" +
           '<p class="meta">' +
-          p.category +
+          escapeHtml(p.category) +
           " · " +
-          p.size +
-          "</p>" +
-          '<p class="price">' +
-          formatPrice(p.price) +
+          sizeCount +
+          " sizes</p>" +
+          '<p class="price">From ' +
+          fromPrice +
           "</p>" +
           "</a>"
         );
@@ -167,28 +204,111 @@
       .join("");
   }
 
-  function initStripeBuy(product) {
+  function initStripeBuy(product, size) {
     var mount = document.getElementById("stripe-buy");
-    if (!mount || !product) return;
+    if (!mount || !product || !size) return;
 
-    if (product.stripePaymentLink) {
+    var stripe = getStripeForSize(product, size.id);
+    var priceLabel = formatPrice(size.price);
+
+    if (stripe.stripePaymentLink) {
       mount.innerHTML =
         '<a class="btn btn-gold stripe-placeholder" href="' +
-        product.stripePaymentLink +
+        escapeHtml(stripe.stripePaymentLink) +
         '" rel="noopener">' +
         "Buy with Stripe — " +
-        formatPrice(product.price) +
+        priceLabel +
         "</a>" +
-        '<p class="stripe-note">Secure payment via Stripe. You will be redirected to complete your order.</p>';
+        '<p class="stripe-note">Secure payment via Stripe for the ' +
+        escapeHtml(size.label) +
+        " canvas. You will be redirected to complete your order.</p>";
       return;
     }
 
     mount.innerHTML =
       '<button type="button" class="btn btn-gold" id="stripe-setup-btn" data-bs-toggle="modal" data-bs-target="#stripeSetupModal">' +
       "Purchase — " +
-      formatPrice(product.price) +
+      priceLabel +
       "</button>" +
-      '<p class="stripe-note">Checkout is ready to connect. Add your Stripe Payment Link in <code>assets/js/products.js</code> to enable live sales.</p>';
+      '<p class="stripe-note">Checkout is ready to connect. Add a Stripe Payment Link for this size in <code>assets/js/products.js</code> to enable live sales.</p>';
+  }
+
+  function updateProductSelection(product, sizeId) {
+    var size = getSizeById(sizeId);
+    if (!product || !size) return;
+
+    var priceEl = document.getElementById("product-price");
+    var sizeDescEl = document.getElementById("size-description");
+    var metaEl = document.getElementById("product-meta");
+    var sizeLabelEl = document.getElementById("selected-size-label");
+
+    if (priceEl) priceEl.textContent = formatPrice(size.price);
+    if (sizeDescEl) sizeDescEl.textContent = size.description;
+    if (sizeLabelEl) sizeLabelEl.textContent = size.label;
+
+    if (metaEl) {
+      metaEl.innerHTML =
+        "<li><span>Size</span><span>" +
+        escapeHtml(size.label) +
+        "</span></li>" +
+        "<li><span>Medium</span><span>" +
+        escapeHtml(product.medium) +
+        "</span></li>" +
+        "<li><span>Category</span><span>" +
+        escapeHtml(product.category) +
+        "</span></li>" +
+        "<li><span>Inspired by</span><span>" +
+        escapeHtml(product.location) +
+        "</span></li>";
+    }
+
+    initStripeBuy(product, size);
+  }
+
+  function renderSizePicker(product) {
+    var mount = document.getElementById("product-sizes");
+    if (!mount || !product) return;
+
+    var sizes = getCanvasSizes();
+    var config = window.DCA_CONFIG || {};
+    var defaultId = config.defaultSizeId || (sizes[0] && sizes[0].id);
+    if (!getSizeById(defaultId) && sizes[0]) defaultId = sizes[0].id;
+
+    mount.innerHTML =
+      '<fieldset class="size-picker">' +
+      "<legend>Choose canvas size</legend>" +
+      '<div class="size-options" role="radiogroup" aria-label="Canvas size">' +
+      sizes
+        .map(function (size) {
+          var checked = size.id === defaultId ? " checked" : "";
+          return (
+            '<label class="size-option">' +
+            '<input type="radio" name="canvas-size" value="' +
+            escapeHtml(size.id) +
+            '"' +
+            checked +
+            ">" +
+            '<span class="size-option-body">' +
+            '<span class="size-option-label">' +
+            escapeHtml(size.label) +
+            "</span>" +
+            '<span class="size-option-price">' +
+            formatPrice(size.price) +
+            "</span>" +
+            "</span></label>"
+          );
+        })
+        .join("") +
+      "</div></fieldset>";
+
+    var inputs = mount.querySelectorAll('input[name="canvas-size"]');
+    inputs.forEach(function (input) {
+      input.addEventListener("change", function () {
+        updateProductSelection(product, input.value);
+      });
+    });
+
+    updateProductSelection(product, defaultId);
   }
 
   function renderProductPage(productId) {
@@ -196,36 +316,18 @@
     if (!product) return;
 
     var titleEl = document.getElementById("product-title");
-    var priceEl = document.getElementById("product-price");
     var descEl = document.getElementById("product-description");
     var imgEl = document.getElementById("product-image");
-    var metaEl = document.getElementById("product-meta");
 
     if (titleEl) titleEl.textContent = product.title;
-    if (priceEl) priceEl.textContent = formatPrice(product.price);
     if (descEl) descEl.textContent = product.description;
     if (imgEl) {
       imgEl.src = base + "assets/images/art/" + product.image;
       imgEl.alt = product.title;
     }
-    if (metaEl) {
-      metaEl.innerHTML =
-        "<li><span>Size</span><span>" +
-        product.size +
-        "</span></li>" +
-        "<li><span>Medium</span><span>" +
-        product.medium +
-        "</span></li>" +
-        "<li><span>Category</span><span>" +
-        product.category +
-        "</span></li>" +
-        "<li><span>Inspired by</span><span>" +
-        product.location +
-        "</span></li>";
-    }
 
     document.title = product.title + " · Delaware Canvas Art";
-    initStripeBuy(product);
+    renderSizePicker(product);
   }
 
   function initReveals() {
@@ -275,6 +377,8 @@
   window.DCA = {
     formatPrice: formatPrice,
     getProductById: getProductById,
+    getSizeById: getSizeById,
+    getStartingPrice: getStartingPrice,
     renderGalleryGrid: renderGalleryGrid
   };
 })();

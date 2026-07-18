@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Canvas Print · Delaware Canvas Art</title>
-  <meta name="description" content="Premium gallery-wrapped canvas print from Delaware Canvas Art. View details and purchase securely with Stripe.">
+  <meta name="description" content="Premium gallery-wrapped canvas print from Delaware Canvas Art. Choose your size and purchase securely with Stripe.">
   <link rel="icon" href="../assets/images/logo.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,8 +27,10 @@
         <div class="col-lg-5 product-info reveal">
           <p class="section-kicker">Canvas Print</p>
           <h1 id="product-title">Loading…</h1>
-          <p class="product-price" id="product-price"></p>
           <p id="product-description"></p>
+          <div id="product-sizes"></div>
+          <p class="product-price" id="product-price"></p>
+          <p class="size-description" id="size-description"></p>
           <ul class="product-meta" id="product-meta"></ul>
           <div class="stripe-checkout" id="stripe-buy"></div>
         </div>
@@ -40,14 +42,15 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content" style="border-radius:2px;border:none">
         <div class="modal-header border-0">
-          <h2 class="modal-title fs-5" id="stripeSetupLabel" style="font-family:var(--font-display)">Connect Stripe to sell this print</h2>
+          <h2 class="modal-title fs-5" id="stripeSetupLabel" style="font-family:var(--font-display)">Connect Stripe for this size</h2>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <ol class="mb-3">
-            <li>In Stripe, create a Product with a Price matching this print.</li>
-            <li>Create a <strong>Payment Link</strong> for that price.</li>
-            <li>Paste the link into <code>stripePaymentLink</code> for this product in <code>assets/js/products.js</code>.</li>
+            <li>In Stripe, create a Product for this print (or reuse one Product with multiple Prices).</li>
+            <li>Add a <strong>Price</strong> for the selected canvas size (8×10, 11×14, 12×12, or 16×20).</li>
+            <li>Create a <strong>Payment Link</strong> for that Price.</li>
+            <li>Paste the link into <code>stripe.SIZE.stripePaymentLink</code> for this product in <code>assets/js/products.js</code>.</li>
           </ol>
           <p class="mb-0 small text-secondary">Set Payment Link success/cancel URLs to your site’s <code>success.html</code> and <code>cancel.html</code> pages.</p>
         </div>
