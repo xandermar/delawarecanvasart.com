@@ -1,0 +1,53 @@
+# Uses STRIPE_SECRET_KEY from GitHub Secrets to create a Stripe Checkout Session
+# (payment transfer) for a product name, size, and price.
+#
+# Run manually: Actions → "Process Stripe payment" → Run workflow
+
+name: Process Stripe payment
+
+on:
+  workflow_dispatch:
+    inputs:
+      product_name:
+        description: Product name
+        required: true
+        default: "Dune Fence at Golden Hour"
+      product_size:
+        description: Canvas size label
+        required: true
+        default: '11" × 14"'
+      product_price:
+        description: Price in USD
+        required: true
+        default: "199.99"
+      product_id:
+        description: Product id
+        required: false
+        default: "dune-fence"
+      size_id:
+        description: Size id
+        required: false
+        default: "11x14"
+
+permissions:
+  contents: read
+
+jobs:
+  create-checkout:
+    name: Create Checkout Session
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Stripe Checkout Session
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          PRODUCT_NAME: ${{ inputs.product_name }}
+          PRODUCT_SIZE: ${{ inputs.product_size }}
+          PRODUCT_PRICE: ${{ inputs.product_price }}
+          PRODUCT_ID: ${{ inputs.product_id }}
+          SIZE_ID: ${{ inputs.size_id }}
+          SUCCESS_URL: https://delawarecanvasart.com/success.html
+          CANCEL_URL: https://delawarecanvasart.com/cancel.html
+        run: node .github/scripts/create-checkout-session.mjs

@@ -1,0 +1,67 @@
+# Deploys the Stripe Checkout Worker using the Secret key from GitHub Secrets.
+# The browser never sees STRIPE_SECRET_KEY — only the Worker URL.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   STRIPE_SECRET_KEY       sk_test_... or sk_live_...
+#   CLOUDFLARE_API_TOKEN    Cloudflare API token with Workers Edit
+#   CLOUDFLARE_ACCOUNT_ID   Cloudflare account id
+#
+# Optional:
+#   STRIPE_WEBHOOK_SECRET   whsec_... if you enable /webhook in Stripe
+#   CHECKOUT_ENDPOINT       https://….workers.dev (used by pages inject workflow)
+
+name: Deploy Stripe checkout
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "api/**"
+      - ".github/workflows/deploy-stripe-checkout.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy payment processor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Stripe secret is configured
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: |
+          if [ -z "$STRIPE_SECRET_KEY" ]; then
+            echo "::error::Add repository secret STRIPE_SECRET_KEY (sk_test_... or sk_live_...)."
+            exit 1
+          fi
+          case "$STRIPE_SECRET_KEY" in
+            sk_test_*|sk_live_*) echo "Stripe Secret key present (prefix hidden)." ;;
+            *)
+              echo "::error::STRIPE_SECRET_KEY must start with sk_test_ or sk_live_."
+              exit 1
+              ;;
+          esac
+
+      - name: Deploy Worker with Stripe secret
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: api
+          command: deploy
+          secrets: |
+            STRIPE_SECRET_KEY
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+
+      - name: Reminder — point the site at the Worker
+        run: |
+          echo "After deploy, set repository secret CHECKOUT_ENDPOINT to your Worker URL"
+          echo "(e.g. https://delaware-canvas-checkout.<subdomain>.workers.dev)."
+          echo "Then run workflow \"Deploy GitHub Pages\" (or paste the URL into assets/js/config.js)."
+          echo "Optional webhook: wrangler secret put STRIPE_WEBHOOK_SECRET (from secret STRIPE_WEBHOOK_SECRET)."

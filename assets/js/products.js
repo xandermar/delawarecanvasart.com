@@ -1,17 +1,11 @@
 /**
- * Product catalog + Stripe Payment Link configuration.
+ * Product catalog — four canvas sizes per print.
  *
- * Each artwork is offered in four canvas sizes. Checkout uses Stripe Payment
- * Links (static-site friendly — no secret key in the browser).
+ * Preferred checkout: GitHub Secret STRIPE_SECRET_KEY → Action deploys Worker →
+ * Purchase posts { name, size, price } to checkoutEndpoint (see config.js).
  *
- * To enable live checkout for a size:
- * 1. In Stripe, create a Product for the print (or one Product with multiple Prices).
- * 2. Create a Price for that canvas size.
- * 3. Create a Payment Link for the Price.
- * 4. Paste the URL into `stripePaymentLink` for that size below.
- * 5. Optionally store the Price ID in `stripePriceId` for reference / Buy Buttons.
- *
- * Set Payment Link success/cancel URLs to success.html and cancel.html on your domain.
+ * Optional fallback: paste a Stripe Payment Link into stripe.SIZE.stripePaymentLink
+ * if the Worker endpoint is not configured yet.
  */
 window.DCA_CANVAS_SIZES = [
   {
@@ -127,3 +121,20 @@ window.DCA_PRODUCTS = [
     stripe: dcaEmptySizeLinks()
   }
 ];
+
+/**
+ * Payload for the secrets-backed checkout Worker / GitHub Action script.
+ * price is USD dollars; the server converts to cents for Stripe.
+ */
+window.DCA_checkoutPayload = function (product, size) {
+  if (!product || !size) return null;
+  return {
+    name: product.title,
+    size: size.label,
+    price: size.price,
+    productId: product.id,
+    sizeId: size.id,
+    medium: product.medium || "",
+    description: product.description || ""
+  };
+};
