@@ -46,38 +46,31 @@ Product pages let shoppers pick a size, read the size description, and buy that 
 
 ## Stripe via GitHub Secrets + Actions
 
-Purchase sends the selected print’s **name**, **size**, and **price** to Stripe Checkout. The **Secret key never goes in the website files** — it is stored as a GitHub Secret and deployed to a Cloudflare Worker by Actions.
+No Cloudflare (or other host) is required. The Stripe **Secret key** stays in GitHub Secrets. An Action uses it to create Stripe Payment Links for each print × size (name, size, price), then commits them for GitHub Pages.
 
-### 1. Add GitHub Secrets
+### 1. Add one GitHub Secret
 
 Repo → **Settings → Secrets and variables → Actions**:
 
 | Secret | Value |
 |--------|--------|
 | `STRIPE_SECRET_KEY` | `sk_test_...` (test) or `sk_live_...` (live) from [Stripe API keys](https://dashboard.stripe.com/apikeys) |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare token with Workers edit permission |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account id |
-| `CHECKOUT_ENDPOINT` | Worker URL after first deploy (e.g. `https://delaware-canvas-checkout.….workers.dev`) |
-| `STRIPE_WEBHOOK_SECRET` | Optional `whsec_...` if you wire `/webhook` in Stripe |
 
-### 2. Deploy the payment processor
+Optional repository variable: `SITE_URL` (defaults to `https://delawarecanvasart.com` for success redirects).
 
-Run workflow **Deploy Stripe checkout** (`.github/workflows/deploy-stripe-checkout.yml`). It injects `STRIPE_SECRET_KEY` into the Worker that creates Checkout Sessions (payment transfer).
+### 2. Sync Payment Links
 
-### 3. Point the site at the Worker
+Run workflow **Sync Stripe payment links**. It:
 
-- Set secret `CHECKOUT_ENDPOINT` to the Worker URL, then run **Deploy GitHub Pages**, **or**
-- Paste the URL into `checkoutEndpoint` in `assets/js/config.js`
+1. Reads products/sizes from `assets/js/products.js`
+2. Calls Stripe with `STRIPE_SECRET_KEY` to create Prices + Payment Links
+3. Writes `assets/js/stripe-links.generated.js` and commits it
 
-Switch Pages source to **GitHub Actions** if you use the Pages workflow (injects the endpoint at build time).
+Purchase on the site then redirects to those Stripe-hosted links.
 
-### 4. Manual payment smoke test
+### 3. Manual payment smoke test
 
-Actions → **Process Stripe payment** → enter name / size / price → Run. Uses `STRIPE_SECRET_KEY` from Secrets via `.github/scripts/create-checkout-session.mjs`.
-
-### Fallback: Payment Links
-
-If `checkoutEndpoint` is empty, you can still paste Stripe Payment Links into `stripe.SIZE.stripePaymentLink` in `assets/js/products.js`.
+Actions → **Process Stripe payment** → enter name / size / price → Run. Creates a one-off Checkout Session with the same secret (`.github/scripts/create-checkout-session.mjs`).
 
 ## Brand assets
 

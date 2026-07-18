@@ -1,7 +1,7 @@
-# Uses STRIPE_SECRET_KEY from GitHub Secrets to create a Stripe Checkout Session
-# (payment transfer) for a product name, size, and price.
+# Uses STRIPE_SECRET_KEY from GitHub Secrets to create a one-off Stripe
+# Checkout Session (payment transfer) for a product name, size, and price.
 #
-# Run manually: Actions → "Process Stripe payment" → Run workflow
+# Run: Actions → "Process Stripe payment" → Run workflow
 
 name: Process Stripe payment
 

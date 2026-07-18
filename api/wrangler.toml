@@ -1,7 +1,0 @@
-name = "delaware-canvas-checkout"
-main = "create-checkout-session.js"
-compatibility_date = "2024-11-01"
-
-# Secrets are injected by GitHub Actions from repository secrets:
-#   STRIPE_SECRET_KEY      (required)
-#   STRIPE_WEBHOOK_SECRET  (optional)
