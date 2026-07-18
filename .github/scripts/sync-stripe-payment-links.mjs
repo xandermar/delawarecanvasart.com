@@ -57,6 +57,14 @@ async function stripe(method, urlPath, params) {
   const data = await res.json();
   if (!res.ok) {
     const msg = data.error?.message || JSON.stringify(data);
+    if (/no valid payment method types/i.test(msg)) {
+      throw new Error(
+        `${msg}\n\n` +
+          `Live mode needs at least one payment method (usually Cards) turned on.\n` +
+          `Open https://dashboard.stripe.com/settings/payment_methods\n` +
+          `→ switch the Dashboard to Live (not Test) → enable Card payments → re-run Sync.`
+      );
+    }
     throw new Error(`Stripe ${method} ${urlPath}: ${msg}`);
   }
   return data;
@@ -165,6 +173,8 @@ async function ensurePaymentLink(priceId, product, size, existing) {
   const params = new URLSearchParams();
   params.set("line_items[0][price]", priceId);
   params.set("line_items[0][quantity]", "1");
+  // Explicit card support — still requires Cards enabled in the live Dashboard.
+  params.append("payment_method_types[]", "card");
   params.set("after_completion[type]", "redirect");
   params.set("after_completion[redirect][url]", successUrl);
   params.set("metadata[productId]", product.id);

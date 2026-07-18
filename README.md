@@ -70,6 +70,8 @@ Purchase on the site then redirects to those Stripe-hosted links.
 
 When you switch the secret from `sk_test_…` to `sk_live_…` (or back), re-run the workflow — it drops links from the other mode and creates new ones. Use the **force_resync** input to recreate all links even if the mode is unchanged.
 
+**Live mode tip:** Before the first live sync, enable payment methods (at least **Cards**) in the [Stripe payment method settings](https://dashboard.stripe.com/settings/payment_methods) with the Dashboard toggled to **Live**. Otherwise Payment Link creation fails with “No valid payment method types”.
+
 ### 3. Manual payment smoke test
 
 Actions → **Process Stripe payment** → enter name / size / price → Run. Creates a one-off Checkout Session with the same secret (`.github/scripts/create-checkout-session.mjs`).
