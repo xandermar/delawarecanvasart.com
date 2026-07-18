@@ -120,7 +120,40 @@
   }
 
   function getCanvasSizes() {
-    return window.DCA_CANVAS_SIZES || [];
+    if (window.DCA_CANVAS_SIZES && window.DCA_CANVAS_SIZES.length) {
+      return window.DCA_CANVAS_SIZES;
+    }
+    // Fallback if products.js is cached without the size catalog
+    return [
+      {
+        id: "8x10",
+        label: '8" × 10"',
+        price: 159.99,
+        description:
+          "Our 8×10 canvas is the perfect choice for adding a touch of Delaware’s coastal beauty to smaller spaces such as bookshelves, desks, entryways, bathrooms, or gallery walls. Its compact size makes it an affordable gift while still showcasing every vibrant detail of the artwork."
+      },
+      {
+        id: "11x14",
+        label: '11" × 14"',
+        price: 199.99,
+        description:
+          "The 11×14 canvas offers a versatile display size that works beautifully in bedrooms, home offices, kitchens, and hallways. It provides greater visual impact while fitting comfortably into most spaces, making it one of the most popular choices for everyday décor."
+      },
+      {
+        id: "12x12",
+        label: '12" × 12"',
+        price: 199.99,
+        description:
+          "The 12×12 canvas features a contemporary square format that complements modern interiors and is ideal for balanced landscape and wildlife compositions. Its unique proportions make it an excellent accent piece for living rooms, offices, beach homes, or as part of a coordinated gallery wall."
+      },
+      {
+        id: "16x20",
+        label: '16" × 20"',
+        price: 359.99,
+        description:
+          "The 16×20 canvas creates a bold statement and allows the rich colors and intricate details of the artwork to truly shine. Perfect for living rooms, dining rooms, offices, beach houses, and entryways, this larger size becomes an eye-catching centerpiece that brings the beauty of Delaware’s landscapes into any room."
+      }
+    ];
   }
 
   function getSizeById(sizeId) {
@@ -265,47 +298,61 @@
     initStripeBuy(product, size);
   }
 
+  function setSelectedSizeButton(mount, sizeId) {
+    var buttons = mount.querySelectorAll(".size-option");
+    for (var i = 0; i < buttons.length; i++) {
+      var btn = buttons[i];
+      var selected = btn.getAttribute("data-size") === sizeId;
+      btn.classList.toggle("is-selected", selected);
+      btn.setAttribute("aria-pressed", selected ? "true" : "false");
+    }
+  }
+
   function renderSizePicker(product) {
     var mount = document.getElementById("product-sizes");
     if (!mount || !product) return;
 
     var sizes = getCanvasSizes();
-    var config = window.DCA_CONFIG || {};
-    var defaultId = config.defaultSizeId || (sizes[0] && sizes[0].id);
-    if (!getSizeById(defaultId) && sizes[0]) defaultId = sizes[0].id;
+    if (!sizes.length) return;
 
+    var config = window.DCA_CONFIG || {};
+    var defaultId = config.defaultSizeId || sizes[0].id;
+    if (!getSizeById(defaultId)) defaultId = sizes[0].id;
+
+    // Button grid avoids Bootstrap fieldset/legend collapse bugs on iOS Safari
     mount.innerHTML =
-      '<fieldset class="size-picker">' +
-      "<legend>Choose canvas size</legend>" +
-      '<div class="size-options" role="radiogroup" aria-label="Canvas size">' +
+      '<div class="size-picker">' +
+      '<p class="size-picker-title" id="size-picker-label">Choose canvas size</p>' +
+      '<div class="size-options" role="group" aria-labelledby="size-picker-label">' +
       sizes
         .map(function (size) {
-          var checked = size.id === defaultId ? " checked" : "";
+          var selected = size.id === defaultId;
           return (
-            '<label class="size-option">' +
-            '<input type="radio" name="canvas-size" value="' +
+            '<button type="button" class="size-option' +
+            (selected ? " is-selected" : "") +
+            '" data-size="' +
             escapeHtml(size.id) +
-            '"' +
-            checked +
-            ">" +
-            '<span class="size-option-body">' +
+            '" aria-pressed="' +
+            (selected ? "true" : "false") +
+            '">' +
             '<span class="size-option-label">' +
             escapeHtml(size.label) +
             "</span>" +
             '<span class="size-option-price">' +
             formatPrice(size.price) +
             "</span>" +
-            "</span></label>"
+            "</button>"
           );
         })
         .join("") +
-      "</div></fieldset>";
+      "</div></div>";
 
-    var inputs = mount.querySelectorAll('input[name="canvas-size"]');
-    inputs.forEach(function (input) {
-      input.addEventListener("change", function () {
-        updateProductSelection(product, input.value);
-      });
+    mount.addEventListener("click", function (event) {
+      var btn = event.target.closest(".size-option");
+      if (!btn || !mount.contains(btn)) return;
+      var sizeId = btn.getAttribute("data-size");
+      setSelectedSizeButton(mount, sizeId);
+      updateProductSelection(product, sizeId);
     });
 
     updateProductSelection(product, defaultId);
