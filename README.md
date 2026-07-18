@@ -31,20 +31,37 @@ Then visit `http://localhost:8080`.
 4. Branch: `main` (or your default), folder: **/ (root)**
 5. Optional: add a custom domain (`delawarecanvasart.com`) under Pages → Custom domain. A `CNAME` file is included for that hostname.
 
-## Stripe setup (Payment Links)
+## Stripe checkout (name, size, price)
 
-This site is fully static, so checkout uses [Stripe Payment Links](https://docs.stripe.com/payment-links) (no backend required).
+Clicking **Purchase** sends that print’s **name**, **size**, and **price** to Stripe Checkout.
 
-1. In the [Stripe Dashboard](https://dashboard.stripe.com/), create a **Product** and **Price** for each print.
-2. Create a **Payment Link** for that price.
-3. Set the Payment Link’s success and cancel URLs to:
-   - `https://YOUR_DOMAIN/success.html`
-   - `https://YOUR_DOMAIN/cancel.html`
-4. Open `assets/js/products.js` and paste each link into the matching product’s `stripePaymentLink` field.
+### Which API key?
 
-Until Payment Links are set, the Purchase button opens an in-page setup guide.
+| Key | Looks like | Where it goes |
+|-----|------------|---------------|
+| **Secret key** (required) | `sk_test_...` or `sk_live_...` | Server only (`STRIPE_SECRET_KEY` on the Worker) |
+| **Publishable key** (optional here) | `pk_test_...` or `pk_live_...` | Browser — not needed if you redirect with the Session `url` |
 
-Optional: put your publishable key in `assets/js/config.js` if you later switch to Stripe Buy Buttons.
+GitHub Pages cannot hold the Secret key safely. A tiny Cloudflare Worker creates the Checkout Session.
+
+1. Get keys from [Stripe → Developers → API keys](https://dashboard.stripe.com/apikeys). Use **test** keys (`sk_test_` / `pk_test_`) until you go live.
+2. Deploy `api/create-checkout-session.js`:
+
+```bash
+cd api
+npx wrangler secret put STRIPE_SECRET_KEY   # paste sk_test_... or sk_live_...
+npx wrangler deploy
+```
+
+3. Put the Worker URL in `assets/js/config.js`:
+
+```js
+checkoutEndpoint: "https://delaware-canvas-checkout.YOUR_SUBDOMAIN.workers.dev"
+```
+
+4. Open a product page and click **Purchase** — Stripe receives name, size, and price as line-item + metadata.
+
+Optional fallback: set `stripePaymentLink` on a product in `assets/js/products.js` if the endpoint is empty (static Payment Link only; no dynamic payload).
 
 ## Brand assets
 
