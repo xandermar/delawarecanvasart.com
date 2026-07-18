@@ -68,6 +68,8 @@ Run workflow **Sync Stripe payment links**. It:
 
 Purchase on the site then redirects to those Stripe-hosted links.
 
+When you switch the secret from `sk_test_…` to `sk_live_…` (or back), re-run the workflow — it drops links from the other mode and creates new ones. Use the **force_resync** input to recreate all links even if the mode is unchanged.
+
 ### 3. Manual payment smoke test
 
 Actions → **Process Stripe payment** → enter name / size / price → Run. Creates a one-off Checkout Session with the same secret (`.github/scripts/create-checkout-session.mjs`).
