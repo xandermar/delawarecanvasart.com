@@ -1,0 +1,6 @@
+# Exclude editor / OS junk; keep site assets tracked
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
