@@ -522,19 +522,16 @@ a:hover {
 }
 
 .size-picker {
-  border: 0;
-  padding: 0;
   margin: 0 0 1.25rem;
 }
 
-.size-picker legend {
+.size-picker-title {
   font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  margin-bottom: 0.75rem;
-  float: none;
-  width: auto;
+  color: var(--navy);
+  margin: 0 0 0.75rem;
 }
 
 .size-options {
@@ -544,40 +541,35 @@ a:hover {
 }
 
 .size-option {
-  position: relative;
-  margin: 0;
-  cursor: pointer;
-}
-
-.size-option input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.size-option-body {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 0.15rem;
-  min-height: 100%;
+  width: 100%;
+  margin: 0;
   padding: 0.85rem 0.9rem;
   border: 1px solid rgba(26, 43, 69, 0.18);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.35);
-  transition: border-color var(--transition), background var(--transition), transform var(--transition);
-}
-
-.size-option:hover .size-option-body {
-  border-color: var(--gold);
   background: rgba(255, 255, 255, 0.55);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
 }
 
-.size-option input:focus-visible + .size-option-body {
+.size-option:hover {
+  border-color: var(--gold);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.size-option:focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
 
-.size-option input:checked + .size-option-body {
+.size-option.is-selected {
   border-color: var(--navy);
   background: rgba(26, 43, 69, 0.06);
   box-shadow: inset 0 0 0 1px var(--navy);
