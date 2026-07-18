@@ -1,13 +1,14 @@
 /**
- * Product catalog + Stripe Payment Link configuration.
+ * Product catalog for Delaware Canvas Art.
  *
- * To enable live checkout:
- * 1. Create a Product + Price in Stripe Dashboard for each print.
- * 2. Create a Payment Link for that price (or use Stripe Payment Links API).
- * 3. Paste the Payment Link URL into `stripePaymentLink` below.
- * 4. Optionally set `stripeBuyButtonId` + publishable key in config.js for Buy Buttons.
+ * Purchase sends { name, size, price } to Stripe Checkout via your
+ * checkoutEndpoint (see config.js + api/create-checkout-session.js).
  *
- * Until configured, the Buy button opens a helpful setup notice.
+ * That endpoint must use your Stripe Secret key (sk_test_... / sk_live_...).
+ * Do not put the Secret key in this file.
+ *
+ * Optional fallback: set stripePaymentLink to a Dashboard Payment Link URL
+ * if you are not using the dynamic checkout endpoint yet.
  */
 window.DCA_PRODUCTS = [
   {
@@ -22,7 +23,7 @@ window.DCA_PRODUCTS = [
     location: "Sussex County shoreline",
     description:
       "Weathered wood and wind-sculpted dunes catch the last warm light of a Sussex County sunset. A quiet coastal rhythm rendered for walls that need salt air and sky.",
-    stripePaymentLink: "" // e.g. "https://buy.stripe.com/test_xxxxx"
+    stripePaymentLink: ""
   },
   {
     id: "cape-henlopen-light",
@@ -95,3 +96,19 @@ window.DCA_PRODUCTS = [
     stripePaymentLink: ""
   }
 ];
+
+/**
+ * Payload sent to the checkout endpoint / Stripe Checkout Session.
+ * price is in USD dollars; the server converts to cents.
+ */
+window.DCA_checkoutPayload = function (product) {
+  if (!product) return null;
+  return {
+    name: product.title,
+    size: product.size,
+    price: product.price,
+    productId: product.id,
+    medium: product.medium || "",
+    description: product.description || ""
+  };
+};

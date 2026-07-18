@@ -167,28 +167,104 @@
       .join("");
   }
 
+  function absoluteUrl(relPath) {
+    try {
+      return new URL(base + relPath, window.location.href).href;
+    } catch (e) {
+      return window.location.origin + "/" + relPath.replace(/^\//, "");
+    }
+  }
+
+  function startStripeCheckout(product, button) {
+    var config = window.DCA_CONFIG || {};
+    var endpoint = (config.checkoutEndpoint || "").trim();
+    var payloadFn = window.DCA_checkoutPayload;
+    var payload = payloadFn ? payloadFn(product) : null;
+
+    if (!endpoint) {
+      var modalEl = document.getElementById("stripeSetupModal");
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+      return;
+    }
+
+    if (!payload) return;
+
+    var originalLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = "Redirecting to Stripe…";
+
+    fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: payload.name,
+        size: payload.size,
+        price: payload.price,
+        productId: payload.productId,
+        successUrl: absoluteUrl("success.html"),
+        cancelUrl: absoluteUrl("cancel.html")
+      })
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          if (!res.ok) throw new Error(data.error || "Checkout failed.");
+          return data;
+        });
+      })
+      .then(function (data) {
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+        throw new Error("Stripe did not return a checkout URL.");
+      })
+      .catch(function (err) {
+        button.disabled = false;
+        button.textContent = originalLabel;
+        alert(err.message || "Unable to start Stripe checkout.");
+      });
+  }
+
   function initStripeBuy(product) {
     var mount = document.getElementById("stripe-buy");
     if (!mount || !product) return;
 
-    if (product.stripePaymentLink) {
+    var config = window.DCA_CONFIG || {};
+    var hasEndpoint = !!(config.checkoutEndpoint || "").trim();
+
+    // Prefer dynamic Checkout (name + size + price → Stripe).
+    // Payment Link remains an optional fallback per product.
+    if (hasEndpoint || !product.stripePaymentLink) {
       mount.innerHTML =
-        '<a class="btn btn-gold stripe-placeholder" href="' +
-        product.stripePaymentLink +
-        '" rel="noopener">' +
-        "Buy with Stripe — " +
+        '<button type="button" class="btn btn-gold" id="stripe-purchase-btn">' +
+        "Purchase — " +
         formatPrice(product.price) +
-        "</a>" +
-        '<p class="stripe-note">Secure payment via Stripe. You will be redirected to complete your order.</p>';
+        "</button>" +
+        '<p class="stripe-note">' +
+        (hasEndpoint
+          ? "Secure Stripe Checkout. This print’s name, size, and price are sent when you purchase."
+          : "Set <code>checkoutEndpoint</code> in <code>assets/js/config.js</code> (server holds your Stripe Secret key) to enable purchase.") +
+        "</p>";
+
+      var btn = document.getElementById("stripe-purchase-btn");
+      if (btn) {
+        btn.addEventListener("click", function () {
+          startStripeCheckout(product, btn);
+        });
+      }
       return;
     }
 
     mount.innerHTML =
-      '<button type="button" class="btn btn-gold" id="stripe-setup-btn" data-bs-toggle="modal" data-bs-target="#stripeSetupModal">' +
-      "Purchase — " +
+      '<a class="btn btn-gold stripe-placeholder" href="' +
+      product.stripePaymentLink +
+      '" rel="noopener">' +
+      "Buy with Stripe — " +
       formatPrice(product.price) +
-      "</button>" +
-      '<p class="stripe-note">Checkout is ready to connect. Add your Stripe Payment Link in <code>assets/js/products.js</code> to enable live sales.</p>';
+      "</a>" +
+      '<p class="stripe-note">Secure payment via Stripe Payment Link.</p>';
   }
 
   function renderProductPage(productId) {

@@ -1,0 +1,6 @@
+name = "delaware-canvas-checkout"
+main = "create-checkout-session.js"
+compatibility_date = "2024-11-01"
+
+# Set with: wrangler secret put STRIPE_SECRET_KEY
+# Value: sk_test_... (test) or sk_live_... (live)

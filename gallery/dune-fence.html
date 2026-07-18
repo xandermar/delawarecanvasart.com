@@ -44,15 +44,16 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
+          <p>Purchase sends this print’s <strong>name</strong>, <strong>size</strong>, and <strong>price</strong> to Stripe Checkout.</p>
           <ol class="mb-3">
-            <li>In Stripe, create a Product with a Price matching this print.</li>
-            <li>Create a <strong>Payment Link</strong> for that price.</li>
-            <li>Paste the link into <code>stripePaymentLink</code> for this product in <code>assets/js/products.js</code>.</li>
+            <li>Get your <strong>Secret key</strong> (<code>sk_test_...</code> or <code>sk_live_...</code>) from the Stripe Dashboard → Developers → API keys. Keep it on a server only—never in this website’s JS.</li>
+            <li>Deploy <code>api/create-checkout-session.js</code> (Cloudflare Worker) and set secret <code>STRIPE_SECRET_KEY</code>.</li>
+            <li>Paste the Worker URL into <code>checkoutEndpoint</code> in <code>assets/js/config.js</code>.</li>
           </ol>
-          <p class="mb-0 small text-secondary">Set Payment Link success/cancel URLs to your site’s <code>success.html</code> and <code>cancel.html</code> pages.</p>
+          <p class="mb-0 small text-secondary">The browser does not need your Secret key. A Publishable key (<code>pk_...</code>) is optional if you redirect with the Checkout Session URL.</p>
         </div>
         <div class="modal-footer border-0">
-          <a class="btn btn-navy" href="https://dashboard.stripe.com/payment-links" target="_blank" rel="noopener">Open Stripe Dashboard</a>
+          <a class="btn btn-navy" href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener">Open Stripe API keys</a>
           <button type="button" class="btn btn-outline-navy" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
