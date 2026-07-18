@@ -40,6 +40,25 @@ async function stripe(method, urlPath, params) {
   return data;
 }
 
+
+function bustProductPageCaches() {
+  const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+  const gallery = path.resolve("gallery");
+  for (const name of fs.readdirSync(gallery)) {
+    if (!name.endsWith(".html") || name === "index.html") continue;
+    const file = path.join(gallery, name);
+    let html = fs.readFileSync(file, "utf8");
+    const next = html.replace(
+      /(stripe-links\.generated\.js\?v=)[^"']+/g,
+      `$1${stamp}`
+    );
+    if (next !== html) {
+      fs.writeFileSync(file, next);
+      console.log(`Cache-busted ${name} → v=${stamp}`);
+    }
+  }
+}
+
 function loadCatalog() {
   const src = fs.readFileSync("assets/js/products.js", "utf8");
   const ctx = { window: {} };
@@ -148,6 +167,7 @@ window.DCA_STRIPE_LINKS = ${JSON.stringify(result, null, 2)};
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, banner);
 console.log(`Wrote ${outPath}`);
+bustProductPageCaches();
 console.log(
   `Synced ${products.length} products × ${sizes.length} sizes using GitHub secret STRIPE_SECRET_KEY.`
 );

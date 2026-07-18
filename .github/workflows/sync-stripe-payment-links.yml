@@ -56,7 +56,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/js/stripe-links.generated.js
+          git add assets/js/stripe-links.generated.js gallery/*.html
           if git diff --staged --quiet; then
             echo "No payment-link changes to commit."
           else
