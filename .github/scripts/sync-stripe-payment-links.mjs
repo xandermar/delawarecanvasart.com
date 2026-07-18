@@ -34,11 +34,11 @@ const forceResync = ["1", "true", "yes"].includes(
   String(process.env.FORCE_RESYNC || "").toLowerCase()
 );
 
-const siteUrl = (process.env.SITE_URL || "https://delawarecanvasart.com").replace(
-  /\/$/,
-  ""
-);
-const successUrl = `${siteUrl}/success.html`;
+const siteUrl = (
+  process.env.SITE_URL || "https://www.delawarecanvasart.com"
+).replace(/\/$/, "");
+// Stripe replaces {CHECKOUT_SESSION_ID} after payment (usable as order reference).
+const successUrl = `${siteUrl}/success.html?order={CHECKOUT_SESSION_ID}`;
 const outPath = path.resolve("assets/js/stripe-links.generated.js");
 
 console.log(
@@ -159,6 +159,14 @@ async function ensurePrice(product, size, existing) {
 
 async function ensurePaymentLink(priceId, product, size, existing) {
   if (existing?.url && existing?.paymentLinkId) {
+    // Keep the buy URL; refresh redirect so success page gets ?order=…
+    const update = new URLSearchParams();
+    update.set("after_completion[type]", "redirect");
+    update.set("after_completion[redirect][url]", successUrl);
+    await stripe("POST", `payment_links/${existing.paymentLinkId}`, update);
+    console.log(
+      `Updated redirect for ${product.id}/${size.id} → ${successUrl}`
+    );
     return { url: existing.url, paymentLinkId: existing.paymentLinkId };
   }
 

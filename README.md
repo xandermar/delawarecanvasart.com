@@ -68,6 +68,8 @@ Run workflow **Sync Stripe payment links**. It:
 
 Purchase on the site then redirects to those Stripe-hosted links.
 
+After payment, Stripe sends shoppers to `success.html?order={CHECKOUT_SESSION_ID}` (the Checkout Session id is the order reference shown on the thank-you page). Re-run Sync after deploy so existing Payment Links pick up that redirect.
+
 When you switch the secret from `sk_test_…` to `sk_live_…` (or back), re-run the workflow — it drops links from the other mode and creates new ones. Use the **force_resync** input to recreate all links even if the mode is unchanged.
 
 ### 3. Manual payment smoke test

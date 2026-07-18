@@ -19,9 +19,10 @@ const price = Number(process.env.PRODUCT_PRICE || "199.99");
 const productId = process.env.PRODUCT_ID || "manual";
 const sizeId = process.env.SIZE_ID || "11x14";
 const successUrl =
-  process.env.SUCCESS_URL || "https://delawarecanvasart.com/success.html";
+  process.env.SUCCESS_URL ||
+  "https://www.delawarecanvasart.com/success.html?order={CHECKOUT_SESSION_ID}";
 const cancelUrl =
-  process.env.CANCEL_URL || "https://delawarecanvasart.com/cancel.html";
+  process.env.CANCEL_URL || "https://www.delawarecanvasart.com/cancel.html";
 
 if (!Number.isFinite(price) || price <= 0) {
   console.error("PRODUCT_PRICE must be a positive number.");
