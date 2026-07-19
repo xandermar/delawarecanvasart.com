@@ -707,6 +707,19 @@ a:hover {
   color: var(--muted);
 }
 
+/* Legal pages */
+.legal-copy h2 {
+  margin-top: 2.25rem;
+}
+
+.legal-copy h2:first-of-type {
+  margin-top: 0;
+}
+
+.legal-copy p {
+  color: var(--ink);
+}
+
 /* Footer */
 .site-footer {
   background:
