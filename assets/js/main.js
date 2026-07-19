@@ -31,6 +31,7 @@
     if (hrefFile === "gallery/index.html" && path.indexOf("/gallery") !== -1) return " active";
     if (hrefFile === "about.html" && page === "about.html") return " active";
     if (hrefFile === "support.html" && page === "support.html") return " active";
+    if (hrefFile === "terms.html" && page === "terms.html") return " active";
     return "";
   }
 
@@ -113,12 +114,17 @@
       '<li><a href="' +
       base +
       'support.html">Support</a></li>' +
+      '<li><a href="' +
+      base +
+      'terms.html">Terms</a></li>' +
       "</ul></div></div>" +
       '<div class="footer-bottom d-flex flex-wrap justify-content-between gap-2">' +
       "<span>&copy; " +
       year +
       " Delaware Canvas Art. All rights reserved.</span>" +
-      "<span>Secure checkout powered by Stripe</span>" +
+      '<span><a href="' +
+      base +
+      'terms.html">Terms and Conditions</a> · Secure checkout powered by Stripe</span>' +
       "</div></div></footer>";
   }
 
