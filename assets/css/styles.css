@@ -502,8 +502,8 @@ a:hover {
 
 .product-image-wrap img {
   width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
+  height: auto;
+  display: block;
 }
 
 .product-info h1 {
