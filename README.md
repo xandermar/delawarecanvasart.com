@@ -10,6 +10,7 @@ Static Bootstrap 5 website for [delawarecanvasart.com](https://delawarecanvasart
 | About | `about.html` |
 | Support | `support.html` |
 | Terms and Conditions | `terms.html` |
+| Privacy | `privacy.html` |
 | Gallery (all products) | `gallery/index.html` |
 | Product detail | `gallery/*.html` (7 prints) |
 | Order success | `success.html` |

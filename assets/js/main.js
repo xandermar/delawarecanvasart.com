@@ -32,6 +32,7 @@
     if (hrefFile === "about.html" && page === "about.html") return " active";
     if (hrefFile === "support.html" && page === "support.html") return " active";
     if (hrefFile === "terms.html" && page === "terms.html") return " active";
+    if (hrefFile === "privacy.html" && page === "privacy.html") return " active";
     return "";
   }
 
@@ -117,6 +118,9 @@
       '<li><a href="' +
       base +
       'terms.html">Terms</a></li>' +
+      '<li><a href="' +
+      base +
+      'privacy.html">Privacy</a></li>' +
       "</ul></div></div>" +
       '<div class="footer-bottom d-flex flex-wrap justify-content-between gap-2">' +
       "<span>&copy; " +
@@ -124,7 +128,9 @@
       " Delaware Canvas Art. All rights reserved.</span>" +
       '<span><a href="' +
       base +
-      'terms.html">Terms and Conditions</a> · Secure checkout powered by Stripe</span>' +
+      'terms.html">Terms</a> · <a href="' +
+      base +
+      'privacy.html">Privacy</a> · Secure checkout powered by Stripe</span>' +
       "</div></div></footer>";
   }
 
