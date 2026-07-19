@@ -670,6 +670,43 @@ a:hover {
   letter-spacing: 0.02em;
 }
 
+/* Support form */
+.support-form {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(26, 43, 69, 0.1);
+  padding: 1.75rem 1.5rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.support-form .form-label {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.support-form .form-control {
+  border-radius: var(--radius);
+  border-color: rgba(26, 43, 69, 0.2);
+  background: var(--foam);
+  color: var(--ink);
+  padding: 0.7rem 0.85rem;
+  box-shadow: none;
+}
+
+.support-form .form-control:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 0.2rem rgba(197, 160, 89, 0.25);
+  background: var(--white);
+}
+
+.support-form-note {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
 /* Footer */
 .site-footer {
   background:
