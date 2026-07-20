@@ -1,14 +1,20 @@
-# Rebuilds gallery product pages from the Canvas products feed.
+# Rebuilds gallery product pages from the Canvas products feed, then
+# automatically runs the Sync Stripe payment links script so checkout
+# URLs match the new product ids.
 #
 # - Deletes gallery/*.html except index.html
 # - Writes a product page per item in the feed
 # - Regenerates assets/js/products.js
-# - Commits changes (all products appear on gallery/index.html)
+# - Creates/updates Stripe Payment Links for each product × size
+# - Commits all changes (all products appear on gallery/index.html)
+#
+# Required secret:
+#   STRIPE_SECRET_KEY   sk_test_... or sk_live_...
+#
+# Optional variable:
+#   SITE_URL            default https://www.delawarecanvasart.com
 #
 # Run: Actions → "Rebuild gallery from products feed" → Run workflow
-#
-# After rebuilding, run "Sync Stripe payment links" so checkout URLs
-# match the new product ids.
 
 name: Rebuild gallery from products feed
 
@@ -31,14 +37,44 @@ jobs:
           PRODUCTS_FEED_URL: https://canvas.xdm.io/products.json
         run: node .github/scripts/rebuild-gallery.mjs
 
-      - name: Commit gallery rebuild
+      - name: Verify Stripe secret
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: |
+          if [ -z "$STRIPE_SECRET_KEY" ]; then
+            echo "::error::Add repository secret STRIPE_SECRET_KEY (sk_test_... or sk_live_...)."
+            exit 1
+          fi
+          case "$STRIPE_SECRET_KEY" in
+            sk_test_*)
+              echo "Stripe Secret key is configured (TEST mode)."
+              echo "STRIPE_MODE=test" >> "$GITHUB_ENV"
+              ;;
+            sk_live_*)
+              echo "Stripe Secret key is configured (LIVE mode)."
+              echo "STRIPE_MODE=live" >> "$GITHUB_ENV"
+              ;;
+            *)
+              echo "::error::STRIPE_SECRET_KEY must start with sk_test_ or sk_live_."
+              exit 1
+              ;;
+          esac
+
+      - name: Sync Stripe payment links
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          SITE_URL: ${{ vars.SITE_URL }}
+          FORCE_RESYNC: "0"
+        run: node .github/scripts/sync-stripe-payment-links.mjs
+
+      - name: Commit gallery rebuild and Stripe links
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add gallery assets/js/products.js
+          git add gallery assets/js/products.js assets/js/stripe-links.generated.js
           if git diff --staged --quiet; then
-            echo "No gallery changes to commit."
+            echo "No gallery or payment-link changes to commit."
           else
-            git commit -m "Rebuild gallery from canvas.xdm.io products feed"
+            git commit -m "Rebuild gallery from products feed and sync Stripe links (${STRIPE_MODE:-unknown} mode)"
             git push
           fi
