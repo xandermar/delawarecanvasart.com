@@ -1,0 +1,44 @@
+# Rebuilds gallery product pages from the Canvas products feed.
+#
+# - Deletes gallery/*.html except index.html
+# - Writes a product page per item in the feed
+# - Regenerates assets/js/products.js
+# - Commits changes (all products appear on gallery/index.html)
+#
+# Run: Actions → "Rebuild gallery from products feed" → Run workflow
+#
+# After rebuilding, run "Sync Stripe payment links" so checkout URLs
+# match the new product ids.
+
+name: Rebuild gallery from products feed
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    name: Rebuild gallery pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Rebuild gallery from products.json
+        env:
+          PRODUCTS_FEED_URL: https://canvas.xdm.io/products.json
+        run: node .github/scripts/rebuild-gallery.mjs
+
+      - name: Commit gallery rebuild
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gallery assets/js/products.js
+          if git diff --staged --quiet; then
+            echo "No gallery changes to commit."
+          else
+            git commit -m "Rebuild gallery from canvas.xdm.io products feed"
+            git push
+          fi

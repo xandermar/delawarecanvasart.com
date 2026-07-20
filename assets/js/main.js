@@ -182,6 +182,13 @@
     return null;
   }
 
+  function productImageSrc(product) {
+    if (!product || !product.image) return "";
+    var image = String(product.image);
+    if (/^https?:\/\//i.test(image)) return image;
+    return base + "assets/images/art/" + image;
+  }
+
   function getStripeForSize(product, sizeId) {
     var generated =
       window.DCA_STRIPE_LINKS &&
@@ -213,7 +220,6 @@
     if (!el || !window.DCA_PRODUCTS) return;
 
     var products = window.DCA_PRODUCTS.slice(0, limit || window.DCA_PRODUCTS.length);
-    var imgBase = base + "assets/images/art/";
     var linkBase = base + "gallery/";
     var fromPrice = formatPrice(getStartingPrice());
     var sizeCount = getCanvasSizes().length;
@@ -227,8 +233,7 @@
           '">' +
           '<div class="art-tile-media">' +
           '<img src="' +
-          imgBase +
-          p.image +
+          escapeHtml(productImageSrc(p)) +
           '" alt="' +
           escapeHtml(p.title) +
           '" loading="lazy" width="800" height="600">' +
@@ -382,7 +387,7 @@
     if (titleEl) titleEl.textContent = product.title;
     if (descEl) descEl.textContent = product.description;
     if (imgEl) {
-      imgEl.src = base + "assets/images/art/" + product.image;
+      imgEl.src = productImageSrc(product);
       imgEl.alt = product.title;
     }
 
