@@ -130,5 +130,17 @@ window.DCA_PRODUCTS = [
     description: "Enhance your driving experience with premium car accessories designed for comfort and style. From ergonomic steering wheel covers to stylish seat cushions, each product ensures a delightful journey while adding a personal touch to your vehicle.",
     featured: true,
     stripe: dcaEmptySizeLinks()
+  },
+  {
+    id: "glory-of-250-years",
+    title: "The Glory of 250 Years",
+    slug: "glory-of-250-years.html",
+    image: "glory-of-250-years.jpg",
+    medium: "Gallery-wrapped canvas",
+    category: "Places",
+    location: "Delaware Bay",
+    description:
+      "July 4th, 2026—from the deck of a boat on Delaware Bay, a weathered Stars and Stripes catches the night wind as fireworks bloom gold across the water. Two hundred fifty years of independence reflected in bay light and celebration, painted for walls that honor the First State’s lasting pride.",
+    stripe: dcaEmptySizeLinks()
   }
 ];

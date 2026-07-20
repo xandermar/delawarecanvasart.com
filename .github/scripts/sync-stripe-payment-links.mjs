@@ -4,6 +4,10 @@
  *
  * Writes assets/js/stripe-links.generated.js — loaded by the static site.
  * No Cloudflare or other host required.
+ *
+ * If you switch from sk_test_… to sk_live_… (or back), this script discards
+ * existing links from the other mode and creates new ones. Set FORCE_RESYNC=1
+ * to recreate all links even when the mode matches.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -15,13 +19,31 @@ if (!key) {
   process.exit(1);
 }
 
-const siteUrl = (process.env.SITE_URL || "https://delawarecanvasart.com").replace(
-  /\/$/,
-  ""
+const stripeMode = key.startsWith("sk_live_")
+  ? "live"
+  : key.startsWith("sk_test_")
+    ? "test"
+    : null;
+
+if (!stripeMode) {
+  console.error("STRIPE_SECRET_KEY must start with sk_test_ or sk_live_.");
+  process.exit(1);
+}
+
+const forceResync = ["1", "true", "yes"].includes(
+  String(process.env.FORCE_RESYNC || "").toLowerCase()
 );
-const successUrl = `${siteUrl}/success.html`;
-const cancelUrl = `${siteUrl}/cancel.html`;
+
+const siteUrl = (
+  process.env.SITE_URL || "https://www.delawarecanvasart.com"
+).replace(/\/$/, "");
+// Stripe replaces {CHECKOUT_SESSION_ID} after payment (usable as order reference).
+const successUrl = `${siteUrl}/success.html?order={CHECKOUT_SESSION_ID}`;
 const outPath = path.resolve("assets/js/stripe-links.generated.js");
+
+console.log(
+  `Stripe mode: ${stripeMode}${forceResync ? " (FORCE_RESYNC enabled)" : ""}`
+);
 
 async function stripe(method, urlPath, params) {
   const res = await fetch(`https://api.stripe.com/v1/${urlPath}`, {
@@ -40,6 +62,24 @@ async function stripe(method, urlPath, params) {
   return data;
 }
 
+function bustProductPageCaches() {
+  const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+  const gallery = path.resolve("gallery");
+  for (const name of fs.readdirSync(gallery)) {
+    if (!name.endsWith(".html") || name === "index.html") continue;
+    const file = path.join(gallery, name);
+    let html = fs.readFileSync(file, "utf8");
+    const next = html.replace(
+      /(stripe-links\.generated\.js\?v=)[^"']+/g,
+      `$1${stamp}`
+    );
+    if (next !== html) {
+      fs.writeFileSync(file, next);
+      console.log(`Cache-busted ${name} → v=${stamp}`);
+    }
+  }
+}
+
 function loadCatalog() {
   const src = fs.readFileSync("assets/js/products.js", "utf8");
   const ctx = { window: {} };
@@ -52,6 +92,16 @@ function loadCatalog() {
   return { products, sizes };
 }
 
+function detectLinkMode(entry) {
+  if (!entry) return null;
+  if (entry.mode === "live" || entry.mode === "test") return entry.mode;
+  const url = String(entry.url || "");
+  // Test Payment Links use /test_ in the path; live links do not.
+  if (url.includes("buy.stripe.com/test_")) return "test";
+  if (url.includes("buy.stripe.com/")) return "live";
+  return null;
+}
+
 function loadExisting() {
   if (!fs.existsSync(outPath)) return {};
   try {
@@ -62,6 +112,20 @@ function loadExisting() {
   } catch {
     return {};
   }
+}
+
+/** Keep prior entry only when it matches the current Stripe mode and reuse is allowed. */
+function reusableEntry(existing) {
+  if (forceResync) return {};
+  if (!existing?.url || !existing?.priceId || !existing?.paymentLinkId) return {};
+  const linkMode = detectLinkMode(existing);
+  if (linkMode && linkMode !== stripeMode) {
+    console.log(
+      `Discarding ${linkMode} link (url mode mismatch for ${stripeMode} key): ${existing.url}`
+    );
+    return {};
+  }
+  return existing;
 }
 
 async function ensurePrice(product, size, existing) {
@@ -79,6 +143,7 @@ async function ensurePrice(product, size, existing) {
   params.set("metadata[dca_sku]", sku);
   params.set("metadata[productId]", product.id);
   params.set("metadata[sizeId]", size.id);
+  params.set("metadata[dca_mode]", stripeMode);
   params.set("default_price_data[currency]", "usd");
   params.set(
     "default_price_data[unit_amount]",
@@ -94,6 +159,14 @@ async function ensurePrice(product, size, existing) {
 
 async function ensurePaymentLink(priceId, product, size, existing) {
   if (existing?.url && existing?.paymentLinkId) {
+    // Keep the buy URL; refresh redirect so success page gets ?order=…
+    const update = new URLSearchParams();
+    update.set("after_completion[type]", "redirect");
+    update.set("after_completion[redirect][url]", successUrl);
+    await stripe("POST", `payment_links/${existing.paymentLinkId}`, update);
+    console.log(
+      `Updated redirect for ${product.id}/${size.id} → ${successUrl}`
+    );
     return { url: existing.url, paymentLinkId: existing.paymentLinkId };
   }
 
@@ -102,37 +175,41 @@ async function ensurePaymentLink(priceId, product, size, existing) {
   params.set("line_items[0][quantity]", "1");
   params.set("after_completion[type]", "redirect");
   params.set("after_completion[redirect][url]", successUrl);
-  // Payment Links use after_completion; cancel is browser back — also set metadata
   params.set("metadata[productId]", product.id);
   params.set("metadata[sizeId]", size.id);
   params.set("metadata[name]", product.title);
   params.set("metadata[size]", size.label);
   params.set("metadata[price]", String(size.price));
+  params.set("metadata[dca_mode]", stripeMode);
 
   const link = await stripe("POST", "payment_links", params);
-  console.log(
-    `Payment link ${product.id}/${size.id} → ${link.url}`
-  );
+  console.log(`Payment link ${product.id}/${size.id} → ${link.url}`);
   return { url: link.url, paymentLinkId: link.id };
 }
 
 const { products, sizes } = loadCatalog();
 const existingAll = loadExisting();
 const result = {};
+let created = 0;
+let reused = 0;
 
 for (const product of products) {
   result[product.id] = {};
   for (const size of sizes) {
-    const prev = existingAll[product.id]?.[size.id] || {};
+    const prev = reusableEntry(existingAll[product.id]?.[size.id] || {});
+    const wasReuse = Boolean(prev.priceId && prev.url);
     const priceId = await ensurePrice(product, size, prev);
     const link = await ensurePaymentLink(priceId, product, size, prev);
+    if (wasReuse) reused += 1;
+    else created += 1;
     result[product.id][size.id] = {
       url: link.url,
       paymentLinkId: link.paymentLinkId,
       priceId,
       name: product.title,
       size: size.label,
-      price: size.price
+      price: size.price,
+      mode: stripeMode
     };
   }
 }
@@ -141,6 +218,7 @@ const banner = `/**
  * AUTO-GENERATED by .github/scripts/sync-stripe-payment-links.mjs
  * Do not edit by hand. Re-run workflow "Sync Stripe payment links".
  * Generated: ${new Date().toISOString()}
+ * Stripe mode: ${stripeMode}
  */
 window.DCA_STRIPE_LINKS = ${JSON.stringify(result, null, 2)};
 `;
@@ -148,6 +226,7 @@ window.DCA_STRIPE_LINKS = ${JSON.stringify(result, null, 2)};
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, banner);
 console.log(`Wrote ${outPath}`);
+bustProductPageCaches();
 console.log(
-  `Synced ${products.length} products × ${sizes.length} sizes using GitHub secret STRIPE_SECRET_KEY.`
+  `Synced ${products.length} products × ${sizes.length} sizes (${created} created, ${reused} reused) in ${stripeMode} mode.`
 );

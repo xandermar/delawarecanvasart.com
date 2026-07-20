@@ -30,6 +30,9 @@
     }
     if (hrefFile === "gallery/index.html" && path.indexOf("/gallery") !== -1) return " active";
     if (hrefFile === "about.html" && page === "about.html") return " active";
+    if (hrefFile === "support.html" && page === "support.html") return " active";
+    if (hrefFile === "terms.html" && page === "terms.html") return " active";
+    if (hrefFile === "privacy.html" && page === "privacy.html") return " active";
     return "";
   }
 
@@ -69,6 +72,11 @@
       '" href="' +
       base +
       'about.html">About</a></li>' +
+      '<li class="nav-item"><a class="nav-link' +
+      navActive("support.html") +
+      '" href="' +
+      base +
+      'support.html">Support</a></li>' +
       "</ul></div></div></nav>";
   }
 
@@ -104,12 +112,25 @@
       '<li><a href="' +
       base +
       'about.html">About</a></li>' +
+      '<li><a href="' +
+      base +
+      'support.html">Support</a></li>' +
+      '<li><a href="' +
+      base +
+      'terms.html">Terms</a></li>' +
+      '<li><a href="' +
+      base +
+      'privacy.html">Privacy</a></li>' +
       "</ul></div></div>" +
       '<div class="footer-bottom d-flex flex-wrap justify-content-between gap-2">' +
       "<span>&copy; " +
       year +
       " Delaware Canvas Art. All rights reserved.</span>" +
-      "<span>Secure checkout powered by Stripe</span>" +
+      '<span><a href="' +
+      base +
+      'terms.html">Terms</a> · <a href="' +
+      base +
+      'privacy.html">Privacy</a> · Secure checkout powered by Stripe</span>' +
       "</div></div></footer>";
   }
 

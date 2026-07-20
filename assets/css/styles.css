@@ -502,8 +502,8 @@ a:hover {
 
 .product-image-wrap img {
   width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
+  height: auto;
+  display: block;
 }
 
 .product-info h1 {
@@ -649,6 +649,75 @@ a:hover {
   font-size: 2.5rem;
   display: block;
   margin-bottom: 1rem;
+}
+
+.order-ref {
+  margin: 1.5rem auto 0.5rem;
+  max-width: 36rem;
+  padding: 1rem 1.25rem;
+  background: rgba(26, 43, 69, 0.06);
+  border-left: 3px solid var(--gold);
+  color: var(--navy);
+  font-size: 0.95rem;
+  word-break: break-all;
+}
+
+.order-ref strong {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+/* Support form */
+.support-form {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(26, 43, 69, 0.1);
+  padding: 1.75rem 1.5rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.support-form .form-label {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.support-form .form-control {
+  border-radius: var(--radius);
+  border-color: rgba(26, 43, 69, 0.2);
+  background: var(--foam);
+  color: var(--ink);
+  padding: 0.7rem 0.85rem;
+  box-shadow: none;
+}
+
+.support-form .form-control:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 0.2rem rgba(197, 160, 89, 0.25);
+  background: var(--white);
+}
+
+.support-form-note {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* Legal pages */
+.legal-copy h2 {
+  margin-top: 2.25rem;
+}
+
+.legal-copy h2:first-of-type {
+  margin-top: 0;
+}
+
+.legal-copy p {
+  color: var(--ink);
 }
 
 /* Footer */

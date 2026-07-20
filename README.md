@@ -8,8 +8,11 @@ Static Bootstrap 5 website for [delawarecanvasart.com](https://delawarecanvasart
 |------|------|
 | Home | `index.html` |
 | About | `about.html` |
+| Support | `support.html` |
+| Terms and Conditions | `terms.html` |
+| Privacy | `privacy.html` |
 | Gallery (all products) | `gallery/index.html` |
-| Product detail | `gallery/*.html` (6 prints) |
+| Product detail | `gallery/*.html` (7 prints) |
 | Order success | `success.html` |
 | Checkout canceled | `cancel.html` |
 
@@ -67,6 +70,10 @@ Run workflow **Sync Stripe payment links**. It:
 3. Writes `assets/js/stripe-links.generated.js` and commits it
 
 Purchase on the site then redirects to those Stripe-hosted links.
+
+After payment, Stripe sends shoppers to `success.html?order={CHECKOUT_SESSION_ID}` (the Checkout Session id is the order reference shown on the thank-you page). Re-run Sync after deploy so existing Payment Links pick up that redirect.
+
+When you switch the secret from `sk_test_…` to `sk_live_…` (or back), re-run the workflow — it drops links from the other mode and creates new ones. Use the **force_resync** input to recreate all links even if the mode is unchanged.
 
 ### 3. Manual payment smoke test
 
