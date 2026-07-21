@@ -54,6 +54,8 @@ function loadCanvasSizes() {
 }
 
 function productPageHtml(productId, cacheBust) {
+  const fonts =
+    "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Great+Vibes&family=Source+Sans+3:wght@400;600&display=swap";
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -61,10 +63,29 @@ function productPageHtml(productId, cacheBust) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Canvas Print · Delaware Canvas Art</title>
   <meta name="description" content="Premium gallery-wrapped canvas print from Delaware Canvas Art. Choose your size and purchase securely with Stripe.">
+  <!-- Analytics deferred for mobile PageSpeed -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        var s = document.createElement('script');
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-YP4TG03PT7';
+        s.async = true;
+        s.onload = function () {
+          gtag('js', new Date());
+          gtag('config', 'G-YP4TG03PT7', { transport_type: 'beacon' });
+        };
+        document.head.appendChild(s);
+      }, 1800);
+    });
+  </script>
   <link rel="icon" href="../assets/images/logo.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Great+Vibes&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
+  <link rel="preload" as="style" href="${fonts}" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="${fonts}"></noscript>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <link rel="stylesheet" href="../assets/css/styles.css?v=${cacheBust}">
 </head>
@@ -77,7 +98,7 @@ function productPageHtml(productId, cacheBust) {
       <div class="row g-4 g-lg-5 align-items-start">
         <div class="col-lg-7">
           <div class="product-image-wrap reveal">
-            <img id="product-image" src="" alt="" width="1200" height="900">
+            <img id="product-image" src="" alt="" width="1200" height="900" fetchpriority="high" decoding="async">
           </div>
         </div>
         <div class="col-lg-5 product-info reveal">
@@ -120,11 +141,11 @@ function productPageHtml(productId, cacheBust) {
 
   <div id="site-footer"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-  <script src="../assets/js/config.js?v=${cacheBust}"></script>
-  <script src="../assets/js/products.js?v=${cacheBust}"></script>
-  <script src="../assets/js/stripe-links.generated.js?v=${cacheBust}"></script>
-  <script src="../assets/js/main.js?v=${cacheBust}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous" defer></script>
+  <script src="../assets/js/config.js?v=${cacheBust}" defer></script>
+  <script src="../assets/js/products.js?v=${cacheBust}" defer></script>
+  <script src="../assets/js/stripe-links.generated.js?v=${cacheBust}" defer></script>
+  <script src="../assets/js/main.js?v=${cacheBust}" defer></script>
 </body>
 </html>
 `;

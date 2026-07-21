@@ -48,7 +48,7 @@
       'index.html">' +
       '<img src="' +
       base +
-      'assets/images/logo.png" width="52" height="52" alt="Delaware Canvas Art logo">' +
+      'assets/images/logo.png" width="52" height="52" alt="Delaware Canvas Art logo" decoding="async">' +
       '<span class="nav-brand-text">' +
       '<span class="brand-wordmark">Delaware</span>' +
       '<span class="brand-script">Canvas Art</span>' +
@@ -93,7 +93,7 @@
       '<div class="footer-brand">' +
       '<img src="' +
       base +
-      'assets/images/logo.png" width="64" height="64" alt="Delaware Canvas Art logo">' +
+      'assets/images/logo.png" width="64" height="64" alt="Delaware Canvas Art logo" loading="lazy" decoding="async">' +
       "<div>" +
       '<div class="brand-wordmark">Delaware</div>' +
       '<div class="brand-script" style="font-size:1.4rem">Canvas Art</div>' +
@@ -203,10 +203,31 @@
     return null;
   }
 
-  function productImageSrc(product) {
+  /**
+   * Applies Cloudinary delivery transforms for mobile-friendly formats/sizes.
+   * Unoptimized PNGs from the feed are multi-MB; f_auto + width cuts this dramatically.
+   */
+  function cloudinaryOptimized(url, width) {
+    var src = String(url || "");
+    if (!src || src.indexOf("res.cloudinary.com/") === -1 || src.indexOf("/upload/") === -1) {
+      return src;
+    }
+    if (/\/upload\/[^/]*f_auto/.test(src)) {
+      return src;
+    }
+    var w = width && width > 0 ? width : 800;
+    return src.replace(
+      "/upload/",
+      "/upload/f_auto,q_auto,c_limit,w_" + w + "/"
+    );
+  }
+
+  function productImageSrc(product, width) {
     if (!product || !product.image) return "";
     var image = String(product.image);
-    if (/^https?:\/\//i.test(image)) return image;
+    if (/^https?:\/\//i.test(image)) {
+      return cloudinaryOptimized(image, width || 800);
+    }
     return base + "assets/images/art/" + image;
   }
 
@@ -246,7 +267,8 @@
     var sizeCount = getCanvasSizes().length;
 
     el.innerHTML = products
-      .map(function (p) {
+      .map(function (p, index) {
+        var eager = index === 0;
         return (
           '<a class="art-tile reveal" href="' +
           linkBase +
@@ -254,10 +276,14 @@
           '">' +
           '<div class="art-tile-media">' +
           '<img src="' +
-          escapeHtml(productImageSrc(p)) +
+          escapeHtml(productImageSrc(p, 720)) +
           '" alt="' +
           escapeHtml(p.title) +
-          '" loading="lazy" width="800" height="600">' +
+          '" width="720" height="540"' +
+          (eager
+            ? ' fetchpriority="high" decoding="async"'
+            : ' loading="lazy" decoding="async"') +
+          ">" +
           "</div>" +
           "<h3>" +
           escapeHtml(p.title) +
@@ -408,8 +434,10 @@
     if (titleEl) titleEl.textContent = product.title;
     if (descEl) descEl.textContent = product.description;
     if (imgEl) {
-      imgEl.src = productImageSrc(product);
+      imgEl.src = productImageSrc(product, 1200);
       imgEl.alt = product.title;
+      imgEl.setAttribute("fetchpriority", "high");
+      imgEl.setAttribute("decoding", "async");
     }
 
     document.title = product.title + " · Delaware Canvas Art";
