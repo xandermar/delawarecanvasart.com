@@ -35,6 +35,7 @@ jobs:
       - name: Rebuild gallery from products.json
         env:
           PRODUCTS_FEED_URL: https://canvas.xdm.io/products.json
+          SITE_URL: ${{ vars.SITE_URL }}
         run: node .github/scripts/rebuild-gallery.mjs
 
       - name: Verify Stripe secret
@@ -67,11 +68,16 @@ jobs:
           FORCE_RESYNC: "0"
         run: node .github/scripts/sync-stripe-payment-links.mjs
 
+      - name: Generate sitemap
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: node .github/scripts/generate-sitemap.mjs
+
       - name: Commit gallery rebuild and Stripe links
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add gallery assets/js/products.js assets/js/stripe-links.generated.js
+          git add gallery assets/js/products.js assets/js/stripe-links.generated.js sitemap.xml robots.txt
           if git diff --staged --quiet; then
             echo "No gallery or payment-link changes to commit."
           else

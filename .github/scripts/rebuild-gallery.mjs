@@ -262,3 +262,16 @@ console.log(`Fetched ${feed.length} products from ${FEED_URL}`);
 console.log(`Removed ${removed} old gallery product page(s).`);
 console.log(`Wrote ${products.length} product page(s) and ${productsPath}`);
 console.log("All products are featured on gallery/index.html.");
+
+const { spawnSync } = await import("node:child_process");
+const sitemapResult = spawnSync(
+  process.execPath,
+  [path.resolve(".github/scripts/generate-sitemap.mjs")],
+  {
+    stdio: "inherit",
+    env: process.env
+  }
+);
+if (sitemapResult.status !== 0) {
+  throw new Error("Sitemap generation failed.");
+}

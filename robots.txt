@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Disallow: /cancel.html
+Disallow: /success.html
+
+Sitemap: https://www.delawarecanvasart.com/sitemap.xml
