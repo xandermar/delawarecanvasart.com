@@ -11,27 +11,29 @@
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
+  function dcaLoadAnalytics() {
+    var s = document.createElement('script');
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-YP4TG03PT7';
+    s.async = true;
+    s.onload = function () {
+      gtag('js', new Date());
+      gtag('config', 'G-YP4TG03PT7', { transport_type: 'beacon', anonymize_ip: true });
+    };
+    document.head.appendChild(s);
+  }
   window.addEventListener('load', function () {
-    setTimeout(function () {
-      var s = document.createElement('script');
-      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-YP4TG03PT7';
-      s.async = true;
-      s.onload = function () {
-        gtag('js', new Date());
-        gtag('config', 'G-YP4TG03PT7', { transport_type: 'beacon' });
-      };
-      document.head.appendChild(s);
-    }, 1800);
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(dcaLoadAnalytics, { timeout: 4000 });
+    } else {
+      setTimeout(dcaLoadAnalytics, 3000);
+    }
   });
 </script>
   <link rel="icon" href="assets/images/logo.png" type="image/png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="assets/fonts/source-sans-3-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/cormorant-garamond-600-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Great+Vibes&family=Source+Sans+3:wght@400;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Great+Vibes&family=Source+Sans+3:wght@400;600&display=swap"></noscript>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-<link rel="stylesheet" href="assets/css/styles.css?v=20260721-perf">
+<link rel="stylesheet" href="assets/css/styles.css?v=20260721-perf2">
 </head>
 <body>
   <div id="site-nav"></div>
@@ -99,9 +101,8 @@
 
   <div id="site-footer"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous" defer></script>
-  <script src="assets/js/config.js?v=20260721-perf" defer></script>
-  <script src="assets/js/products.js?v=20260721-perf" defer></script>
-  <script src="assets/js/main.js?v=20260721-perf" defer></script>
+  <script src="assets/js/config.js?v=20260721-perf2" defer></script>
+  <script src="assets/js/products.js?v=20260721-perf2" defer></script>
+  <script src="assets/js/main.js?v=20260721-perf2" defer></script>
 </body>
 </html>

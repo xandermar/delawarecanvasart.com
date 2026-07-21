@@ -41,43 +41,52 @@
     if (!el) return;
 
     el.innerHTML =
-      '<nav class="navbar navbar-expand-lg site-nav">' +
-      '<div class="container">' +
+      '<nav class="site-nav">' +
+      '<div class="container site-nav-inner">' +
       '<a class="navbar-brand" href="' +
       base +
       'index.html">' +
       '<img src="' +
       base +
-      'assets/images/logo.png" width="52" height="52" alt="Delaware Canvas Art logo" decoding="async">' +
+      'assets/images/logo.webp" width="52" height="52" alt="Delaware Canvas Art logo" decoding="async">' +
       '<span class="nav-brand-text">' +
       '<span class="brand-wordmark">Delaware</span>' +
       '<span class="brand-script">Canvas Art</span>' +
       "</span></a>" +
-      '<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">' +
-      '<span class="navbar-toggler-icon"></span></button>' +
-      '<div class="collapse navbar-collapse" id="mainNav">' +
-      '<ul class="navbar-nav ms-auto align-items-lg-center">' +
-      '<li class="nav-item"><a class="nav-link' +
+      '<button class="nav-toggle" type="button" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">' +
+      '<span class="nav-toggle-bar" aria-hidden="true"></span></button>' +
+      '<div class="nav-panel" id="mainNav">' +
+      '<ul class="nav-list">' +
+      '<li><a class="nav-link' +
       navActive("index.html") +
       '" href="' +
       base +
       'index.html">Home</a></li>' +
-      '<li class="nav-item"><a class="nav-link' +
+      '<li><a class="nav-link' +
       navActive("gallery/index.html") +
       '" href="' +
       base +
       'gallery/index.html">Gallery</a></li>' +
-      '<li class="nav-item"><a class="nav-link' +
+      '<li><a class="nav-link' +
       navActive("about.html") +
       '" href="' +
       base +
       'about.html">About</a></li>' +
-      '<li class="nav-item"><a class="nav-link' +
+      '<li><a class="nav-link' +
       navActive("support.html") +
       '" href="' +
       base +
       'support.html">Support</a></li>' +
       "</ul></div></div></nav>";
+
+    var toggle = el.querySelector(".nav-toggle");
+    var panel = el.querySelector("#mainNav");
+    if (toggle && panel) {
+      toggle.addEventListener("click", function () {
+        var open = panel.classList.toggle("is-open");
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
   }
 
   function renderFooter() {
@@ -93,7 +102,7 @@
       '<div class="footer-brand">' +
       '<img src="' +
       base +
-      'assets/images/logo.png" width="64" height="64" alt="Delaware Canvas Art logo" loading="lazy" decoding="async">' +
+      'assets/images/logo.webp" width="64" height="64" alt="Delaware Canvas Art logo" loading="lazy" decoding="async">' +
       "<div>" +
       '<div class="brand-wordmark">Delaware</div>' +
       '<div class="brand-script" style="font-size:1.4rem">Canvas Art</div>' +
@@ -212,13 +221,13 @@
     if (!src || src.indexOf("res.cloudinary.com/") === -1 || src.indexOf("/upload/") === -1) {
       return src;
     }
-    if (/\/upload\/[^/]*f_auto/.test(src)) {
+    if (/\/upload\/[^/]*f_(auto|webp)/.test(src)) {
       return src;
     }
     var w = width && width > 0 ? width : 800;
     return src.replace(
       "/upload/",
-      "/upload/f_auto,q_auto,c_limit,w_" + w + "/"
+      "/upload/f_webp,q_auto:eco,c_limit,w_" + w + "/"
     );
   }
 
@@ -267,8 +276,7 @@
     var sizeCount = getCanvasSizes().length;
 
     el.innerHTML = products
-      .map(function (p, index) {
-        var eager = index === 0;
+      .map(function (p) {
         return (
           '<a class="art-tile reveal" href="' +
           linkBase +
@@ -276,14 +284,10 @@
           '">' +
           '<div class="art-tile-media">' +
           '<img src="' +
-          escapeHtml(productImageSrc(p, 720)) +
+          escapeHtml(productImageSrc(p, 480)) +
           '" alt="' +
           escapeHtml(p.title) +
-          '" width="720" height="540"' +
-          (eager
-            ? ' fetchpriority="high" decoding="async"'
-            : ' loading="lazy" decoding="async"') +
-          ">" +
+          '" width="480" height="360" loading="lazy" decoding="async">' +
           "</div>" +
           "<h3>" +
           escapeHtml(p.title) +
@@ -324,11 +328,20 @@
     }
 
     mount.innerHTML =
-      '<button type="button" class="btn btn-gold" id="stripe-setup-btn" data-bs-toggle="modal" data-bs-target="#stripeSetupModal">' +
+      '<button type="button" class="btn btn-gold" id="stripe-setup-btn">' +
       "Purchase — " +
       priceLabel +
       "</button>" +
       '<p class="stripe-note">Add GitHub secret <code>STRIPE_SECRET_KEY</code> and run Action <strong>Sync Stripe payment links</strong>.</p>';
+
+    var setupBtn = document.getElementById("stripe-setup-btn");
+    var modal = document.getElementById("stripeSetupModal");
+    if (setupBtn && modal) {
+      setupBtn.addEventListener("click", function () {
+        modal.classList.add("is-open");
+        modal.setAttribute("aria-hidden", "false");
+      });
+    }
   }
 
   function updateProductSelection(product, sizeId) {
@@ -434,7 +447,7 @@
     if (titleEl) titleEl.textContent = product.title;
     if (descEl) descEl.textContent = product.description;
     if (imgEl) {
-      imgEl.src = productImageSrc(product, 1200);
+      imgEl.src = productImageSrc(product, 900);
       imgEl.alt = product.title;
       imgEl.setAttribute("fetchpriority", "high");
       imgEl.setAttribute("decoding", "async");
@@ -472,9 +485,28 @@
     });
   }
 
+  function initModalDismiss() {
+    var modal = document.getElementById("stripeSetupModal");
+    if (!modal) return;
+
+    function closeModal() {
+      modal.classList.remove("is-open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    modal.querySelectorAll("[data-close-modal]").forEach(function (el) {
+      el.addEventListener("click", closeModal);
+    });
+
+    modal.addEventListener("click", function (event) {
+      if (event.target === modal) closeModal();
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     renderNav();
     renderFooter();
+    initModalDismiss();
 
     var galleryHome = document.getElementById("home-gallery");
     if (galleryHome) renderGalleryGrid("home-gallery", 3);
