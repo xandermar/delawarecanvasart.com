@@ -15,6 +15,7 @@ Static Bootstrap 5 website for [delawarecanvasart.com](https://delawarecanvasart
 | Product detail | `gallery/*.html` (7 prints) |
 | Order success | `success.html` |
 | Checkout canceled | `cancel.html` |
+| 404 (not found) | `404.html` |
 
 ## Local preview
 
