@@ -2,38 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Canvas Print · Delaware Canvas Art</title>
   <meta name="description" content="Premium gallery-wrapped canvas print from Delaware Canvas Art. Choose your size and purchase securely with Stripe.">
-  
-  
-<!-- Analytics deferred for mobile PageSpeed -->
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  function dcaLoadAnalytics() {
-    var s = document.createElement('script');
-    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-YP4TG03PT7';
-    s.async = true;
-    s.onload = function () {
-      gtag('js', new Date());
-      gtag('config', 'G-YP4TG03PT7', { transport_type: 'beacon', anonymize_ip: true });
-    };
-    document.head.appendChild(s);
-  }
-  window.addEventListener('load', function () {
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(dcaLoadAnalytics, { timeout: 4000 });
-    } else {
-      setTimeout(dcaLoadAnalytics, 3000);
+  <!-- Analytics deferred for mobile PageSpeed -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    function dcaLoadAnalytics() {
+      var s = document.createElement('script');
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-YP4TG03PT7';
+      s.async = true;
+      s.onload = function () {
+        gtag('js', new Date());
+        gtag('config', 'G-YP4TG03PT7', { transport_type: 'beacon', anonymize_ip: true });
+      };
+      document.head.appendChild(s);
     }
-  });
-</script>
+    window.addEventListener('load', function () {
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(dcaLoadAnalytics, { timeout: 4000 });
+      } else {
+        setTimeout(dcaLoadAnalytics, 3000);
+      }
+    });
+  </script>
   <link rel="icon" href="../assets/images/logo.png" type="image/png">
   <link rel="preload" href="../assets/fonts/source-sans-3-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="../assets/fonts/cormorant-garamond-600-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
-<link rel="stylesheet" href="../assets/css/styles.css?v=20260721-perf2">
+  <link rel="stylesheet" href="../assets/css/styles.css?v=20260724">
 </head>
 <body data-product="vintage-streetscape-clock">
   <div id="site-nav"></div>
@@ -44,7 +42,7 @@
       <div class="row g-4 g-lg-5 align-items-start">
         <div class="col-lg-7">
           <div class="product-image-wrap reveal">
-            <img id="product-image" src="" alt="" width="1200" height="900">
+            <img id="product-image" src="" alt="" width="1200" height="900" fetchpriority="high" decoding="async">
           </div>
         </div>
         <div class="col-lg-5 product-info reveal">
@@ -87,9 +85,9 @@
 
   <div id="site-footer"></div>
 
-  <script src="../assets/js/config.js?v=20260721-perf2" defer></script>
-  <script src="../assets/js/products.js?v=20260721-perf2" defer></script>
-  <script src="../assets/js/stripe-links.generated.js?v=20260721-perf2" defer></script>
-  <script src="../assets/js/main.js?v=20260721-perf2" defer></script>
+  <script src="../assets/js/config.js?v=20260724" defer></script>
+  <script src="../assets/js/products.js?v=20260724" defer></script>
+  <script src="../assets/js/stripe-links.generated.js?v=20260724021527" defer></script>
+  <script src="../assets/js/main.js?v=20260724" defer></script>
 </body>
 </html>
