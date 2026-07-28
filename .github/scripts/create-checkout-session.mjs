@@ -45,9 +45,23 @@ params.set(
 );
 params.set("metadata[productId]", productId);
 params.set("metadata[sizeId]", sizeId);
+params.set("metadata[size_id]", sizeId);
 params.set("metadata[size]", size);
 params.set("metadata[name]", name);
+params.set("metadata[product_title]", name);
 params.set("metadata[price]", String(price));
+
+const prodigiSkus = {
+  "8x10": "GLOBAL-CAN-8X10",
+  "11x14": "GLOBAL-CAN-11X14",
+  "12x12": "GLOBAL-CAN-12X12",
+  "16x20": "GLOBAL-CAN-16X20"
+};
+const prodigiSku = prodigiSkus[sizeId];
+if (prodigiSku) {
+  params.set("metadata[prodigi_sku]", prodigiSku);
+  params.set("metadata[prodigi_wrap]", "ImageWrap");
+}
 
 const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
   method: "POST",

@@ -6,7 +6,8 @@
  * No Cloudflare or other host required.
  *
  * Each size maps to a Prodigi Standard stretched canvas SKU (GLOBAL-CAN-*).
- * SKU + wrap are stored on Payment Link metadata for post-payment fulfillment.
+ * Fulfillment metadata on Price + Payment Link (snake_case for webhook):
+ *   size_id, prodigi_sku, prodigi_wrap, image_url, product_title
  *
  * If you switch from sk_test_… to sk_live_… (or back), this script discards
  * existing links from the other mode and creates new ones. Set FORCE_RESYNC=1
@@ -151,29 +152,40 @@ function reusableEntry(existing) {
 }
 
 async function ensurePrice(product, size, existing) {
+  const dcaSku = `${product.id}:${size.id}`;
+  const prodigi = prodigiForSize(size.id);
+  const meta = fulfillmentMetadata(product, size);
+
   if (existing?.priceId) {
+    // Refresh Price metadata so webhook can resolve SKU from price or session.
+    const update = new URLSearchParams();
+    for (const [key, value] of Object.entries(meta)) {
+      update.set(`metadata[${key}]`, value);
+    }
+    await stripe("POST", `prices/${existing.priceId}`, update);
     return existing.priceId;
   }
 
-  const dcaSku = `${product.id}:${size.id}`;
-  const prodigi = prodigiForSize(size.id);
   const params = new URLSearchParams();
   params.set("name", `${product.title} — ${size.label}`);
   params.set(
     "description",
     `Gallery-wrapped canvas · ${size.label} · Delaware Canvas Art`
   );
+  for (const [key, value] of Object.entries(meta)) {
+    params.set(`metadata[${key}]`, value);
+  }
   params.set("metadata[dca_sku]", dcaSku);
-  params.set("metadata[productId]", product.id);
-  params.set("metadata[sizeId]", size.id);
-  params.set("metadata[prodigiSku]", prodigi.sku);
-  params.set("metadata[prodigiWrap]", prodigi.wrap);
   params.set("metadata[dca_mode]", stripeMode);
   params.set("default_price_data[currency]", "usd");
   params.set(
     "default_price_data[unit_amount]",
     String(Math.round(Number(size.price) * 100))
   );
+  // Propagate the same fulfillment keys onto the default Price.
+  for (const [key, value] of Object.entries(meta)) {
+    params.set(`default_price_data[metadata][${key}]`, value);
+  }
 
   const created = await stripe("POST", "products", params);
   const priceId = created.default_price;
@@ -184,16 +196,31 @@ async function ensurePrice(product, size, existing) {
   return typeof priceId === "string" ? priceId : priceId.id;
 }
 
-function paymentLinkMetadata(product, size) {
+/** Metadata keys expected by the Stripe → Prodigi fulfill webhook. */
+function fulfillmentMetadata(product, size) {
   const prodigi = prodigiForSize(size.id);
+  const imageUrl = String(product.image || "").trim();
+  if (!imageUrl) {
+    throw new Error(`Product "${product.id}" is missing image URL for Prodigi.`);
+  }
+  return {
+    size_id: size.id,
+    prodigi_sku: prodigi.sku,
+    prodigi_wrap: prodigi.wrap,
+    image_url: imageUrl,
+    product_title: product.title,
+    product_id: product.id,
+    size_label: size.label,
+    price: String(size.price)
+  };
+}
+
+function paymentLinkMetadata(product, size) {
+  const meta = fulfillmentMetadata(product, size);
   const params = new URLSearchParams();
-  params.set("metadata[productId]", product.id);
-  params.set("metadata[sizeId]", size.id);
-  params.set("metadata[name]", product.title);
-  params.set("metadata[size]", size.label);
-  params.set("metadata[price]", String(size.price));
-  params.set("metadata[prodigiSku]", prodigi.sku);
-  params.set("metadata[prodigiWrap]", prodigi.wrap);
+  for (const [key, value] of Object.entries(meta)) {
+    params.set(`metadata[${key}]`, value);
+  }
   params.set("metadata[dca_mode]", stripeMode);
   return params;
 }
@@ -255,8 +282,10 @@ for (const product of products) {
       name: product.title,
       size: size.label,
       price: size.price,
-      prodigiSku: prodigi.sku,
-      prodigiWrap: prodigi.wrap,
+      size_id: size.id,
+      prodigi_sku: prodigi.sku,
+      prodigi_wrap: prodigi.wrap,
+      image_url: String(product.image || ""),
       mode: stripeMode
     };
   }
