@@ -34,6 +34,7 @@ const params = new URLSearchParams();
 params.set("mode", "payment");
 params.set("success_url", successUrl);
 params.set("cancel_url", cancelUrl);
+params.set("allow_promotion_codes", "true");
 params.set("line_items[0][quantity]", "1");
 params.set("line_items[0][price_data][currency]", "usd");
 params.set("line_items[0][price_data][unit_amount]", String(unitAmount));

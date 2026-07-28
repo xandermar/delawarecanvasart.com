@@ -159,13 +159,14 @@ async function ensurePrice(product, size, existing) {
 
 async function ensurePaymentLink(priceId, product, size, existing) {
   if (existing?.url && existing?.paymentLinkId) {
-    // Keep the buy URL; refresh redirect so success page gets ?order=…
+    // Keep the buy URL; refresh redirect + enable coupon field on checkout.
     const update = new URLSearchParams();
     update.set("after_completion[type]", "redirect");
     update.set("after_completion[redirect][url]", successUrl);
+    update.set("allow_promotion_codes", "true");
     await stripe("POST", `payment_links/${existing.paymentLinkId}`, update);
     console.log(
-      `Updated redirect for ${product.id}/${size.id} → ${successUrl}`
+      `Updated redirect + coupons for ${product.id}/${size.id} → ${successUrl}`
     );
     return { url: existing.url, paymentLinkId: existing.paymentLinkId };
   }
@@ -175,6 +176,7 @@ async function ensurePaymentLink(priceId, product, size, existing) {
   params.set("line_items[0][quantity]", "1");
   params.set("after_completion[type]", "redirect");
   params.set("after_completion[redirect][url]", successUrl);
+  params.set("allow_promotion_codes", "true");
   params.set("metadata[productId]", product.id);
   params.set("metadata[sizeId]", size.id);
   params.set("metadata[name]", product.title);
