@@ -5,6 +5,9 @@
  * Writes assets/js/stripe-links.generated.js — loaded by the static site.
  * No Cloudflare or other host required.
  *
+ * Each size maps to a Prodigi Standard stretched canvas SKU (GLOBAL-CAN-*).
+ * SKU + wrap are stored on Payment Link metadata for post-payment fulfillment.
+ *
  * If you switch from sk_test_… to sk_live_… (or back), this script discards
  * existing links from the other mode and creates new ones. Set FORCE_RESYNC=1
  * to recreate all links even when the mode matches.
@@ -34,6 +37,15 @@ const forceResync = ["1", "true", "yes"].includes(
   String(process.env.FORCE_RESYNC || "").toLowerCase()
 );
 
+/** Prodigi Standard stretched canvas (gallery / image wrap). */
+const PRODIGI_WRAP = "ImageWrap";
+const PRODIGI_SKUS = {
+  "8x10": "GLOBAL-CAN-8X10",
+  "11x14": "GLOBAL-CAN-11X14",
+  "12x12": "GLOBAL-CAN-12X12",
+  "16x20": "GLOBAL-CAN-16X20"
+};
+
 const siteUrl = (
   process.env.SITE_URL || "https://www.delawarecanvasart.com"
 ).replace(/\/$/, "");
@@ -44,6 +56,16 @@ const outPath = path.resolve("assets/js/stripe-links.generated.js");
 console.log(
   `Stripe mode: ${stripeMode}${forceResync ? " (FORCE_RESYNC enabled)" : ""}`
 );
+
+function prodigiForSize(sizeId) {
+  const sku = PRODIGI_SKUS[sizeId];
+  if (!sku) {
+    throw new Error(
+      `No Prodigi SKU mapped for size "${sizeId}". Add it to PRODIGI_SKUS.`
+    );
+  }
+  return { sku, wrap: PRODIGI_WRAP };
+}
 
 async function stripe(method, urlPath, params) {
   const res = await fetch(`https://api.stripe.com/v1/${urlPath}`, {
@@ -133,16 +155,19 @@ async function ensurePrice(product, size, existing) {
     return existing.priceId;
   }
 
-  const sku = `${product.id}:${size.id}`;
+  const dcaSku = `${product.id}:${size.id}`;
+  const prodigi = prodigiForSize(size.id);
   const params = new URLSearchParams();
   params.set("name", `${product.title} — ${size.label}`);
   params.set(
     "description",
     `Gallery-wrapped canvas · ${size.label} · Delaware Canvas Art`
   );
-  params.set("metadata[dca_sku]", sku);
+  params.set("metadata[dca_sku]", dcaSku);
   params.set("metadata[productId]", product.id);
   params.set("metadata[sizeId]", size.id);
+  params.set("metadata[prodigiSku]", prodigi.sku);
+  params.set("metadata[prodigiWrap]", prodigi.wrap);
   params.set("metadata[dca_mode]", stripeMode);
   params.set("default_price_data[currency]", "usd");
   params.set(
@@ -152,44 +177,62 @@ async function ensurePrice(product, size, existing) {
 
   const created = await stripe("POST", "products", params);
   const priceId = created.default_price;
-  if (!priceId) throw new Error(`No default_price for ${sku}`);
-  console.log(`Created product/price for ${sku} → ${priceId}`);
+  if (!priceId) throw new Error(`No default_price for ${dcaSku}`);
+  console.log(
+    `Created product/price for ${dcaSku} (${prodigi.sku}) → ${priceId}`
+  );
   return typeof priceId === "string" ? priceId : priceId.id;
 }
 
-async function ensurePaymentLink(priceId, product, size, existing) {
-  if (existing?.url && existing?.paymentLinkId) {
-    // Keep the buy URL; refresh redirect + enable coupon field on checkout.
-    const update = new URLSearchParams();
-    update.set("after_completion[type]", "redirect");
-    update.set("after_completion[redirect][url]", successUrl);
-    update.set("allow_promotion_codes", "true");
-    await stripe("POST", `payment_links/${existing.paymentLinkId}`, update);
-    console.log(
-      `Updated redirect + coupons for ${product.id}/${size.id} → ${successUrl}`
-    );
-    return { url: existing.url, paymentLinkId: existing.paymentLinkId };
-  }
-
+function paymentLinkMetadata(product, size) {
+  const prodigi = prodigiForSize(size.id);
   const params = new URLSearchParams();
-  params.set("line_items[0][price]", priceId);
-  params.set("line_items[0][quantity]", "1");
-  params.set("after_completion[type]", "redirect");
-  params.set("after_completion[redirect][url]", successUrl);
-  params.set("allow_promotion_codes", "true");
   params.set("metadata[productId]", product.id);
   params.set("metadata[sizeId]", size.id);
   params.set("metadata[name]", product.title);
   params.set("metadata[size]", size.label);
   params.set("metadata[price]", String(size.price));
+  params.set("metadata[prodigiSku]", prodigi.sku);
+  params.set("metadata[prodigiWrap]", prodigi.wrap);
   params.set("metadata[dca_mode]", stripeMode);
+  return params;
+}
+
+async function ensurePaymentLink(priceId, product, size, existing) {
+  const prodigi = prodigiForSize(size.id);
+
+  if (existing?.url && existing?.paymentLinkId) {
+    // Keep the buy URL; refresh redirect, coupons, and Prodigi metadata.
+    const update = paymentLinkMetadata(product, size);
+    update.set("after_completion[type]", "redirect");
+    update.set("after_completion[redirect][url]", successUrl);
+    update.set("allow_promotion_codes", "true");
+    await stripe("POST", `payment_links/${existing.paymentLinkId}`, update);
+    console.log(
+      `Updated ${product.id}/${size.id} (${prodigi.sku}) → ${successUrl}`
+    );
+    return { url: existing.url, paymentLinkId: existing.paymentLinkId };
+  }
+
+  const params = paymentLinkMetadata(product, size);
+  params.set("line_items[0][price]", priceId);
+  params.set("line_items[0][quantity]", "1");
+  params.set("after_completion[type]", "redirect");
+  params.set("after_completion[redirect][url]", successUrl);
+  params.set("allow_promotion_codes", "true");
 
   const link = await stripe("POST", "payment_links", params);
-  console.log(`Payment link ${product.id}/${size.id} → ${link.url}`);
+  console.log(
+    `Payment link ${product.id}/${size.id} (${prodigi.sku}) → ${link.url}`
+  );
   return { url: link.url, paymentLinkId: link.id };
 }
 
 const { products, sizes } = loadCatalog();
+for (const size of sizes) {
+  prodigiForSize(size.id); // fail fast if a catalog size lacks a Prodigi SKU
+}
+
 const existingAll = loadExisting();
 const result = {};
 let created = 0;
@@ -200,6 +243,7 @@ for (const product of products) {
   for (const size of sizes) {
     const prev = reusableEntry(existingAll[product.id]?.[size.id] || {});
     const wasReuse = Boolean(prev.priceId && prev.url);
+    const prodigi = prodigiForSize(size.id);
     const priceId = await ensurePrice(product, size, prev);
     const link = await ensurePaymentLink(priceId, product, size, prev);
     if (wasReuse) reused += 1;
@@ -211,6 +255,8 @@ for (const product of products) {
       name: product.title,
       size: size.label,
       price: size.price,
+      prodigiSku: prodigi.sku,
+      prodigiWrap: prodigi.wrap,
       mode: stripeMode
     };
   }
