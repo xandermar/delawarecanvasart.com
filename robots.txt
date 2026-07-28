@@ -3,5 +3,6 @@ Allow: /
 
 Disallow: /cancel.html
 Disallow: /success.html
+Disallow: /404.html
 
 Sitemap: https://www.delawarecanvasart.com/sitemap.xml
