@@ -229,11 +229,12 @@ async function ensurePaymentLink(priceId, product, size, existing) {
   const prodigi = prodigiForSize(size.id);
 
   if (existing?.url && existing?.paymentLinkId) {
-    // Keep the buy URL; refresh redirect, coupons, and Prodigi metadata.
+    // Keep the buy URL; refresh checkout settings and Prodigi metadata.
     const update = paymentLinkMetadata(product, size);
     update.set("after_completion[type]", "redirect");
     update.set("after_completion[redirect][url]", successUrl);
     update.set("allow_promotion_codes", "true");
+    update.set("shipping_address_collection[allowed_countries][0]", "US");
     await stripe("POST", `payment_links/${existing.paymentLinkId}`, update);
     console.log(
       `Updated ${product.id}/${size.id} (${prodigi.sku}) → ${successUrl}`
@@ -247,6 +248,7 @@ async function ensurePaymentLink(priceId, product, size, existing) {
   params.set("after_completion[type]", "redirect");
   params.set("after_completion[redirect][url]", successUrl);
   params.set("allow_promotion_codes", "true");
+  params.set("shipping_address_collection[allowed_countries][0]", "US");
 
   const link = await stripe("POST", "payment_links", params);
   console.log(
