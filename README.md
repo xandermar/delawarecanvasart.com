@@ -37,16 +37,13 @@ Then visit `http://localhost:8080`.
 
 ## Canvas sizes
 
-Every print is offered in four gallery-wrapped sizes (configured in `assets/js/products.js` as `DCA_CANVAS_SIZES`):
+Every print uses the full Prodigi `GLOBAL-CAN` size catalog from
+`https://canvas.xdm.io/backend/product-index.json`. The gallery rebuild creates
+both portrait and landscape variants for each physical size. Customer pricing
+is taken directly from each product's `build_cost.total`.
 
-| Size | Price |
-|------|-------|
-| 8×10 | $159.99 |
-| 11×14 | $199.99 |
-| 12×12 | $199.99 |
-| 16×20 | $359.99 |
-
-Product pages let shoppers pick a size, read the size description, and buy that option through Stripe.
+Product pages let shoppers pick a size and orientation, read its image
+requirements, and buy that option through Stripe.
 
 ## Stripe via GitHub Secrets + Actions
 

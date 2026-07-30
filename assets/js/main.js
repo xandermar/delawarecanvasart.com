@@ -153,37 +153,7 @@
     if (window.DCA_CANVAS_SIZES && window.DCA_CANVAS_SIZES.length) {
       return window.DCA_CANVAS_SIZES;
     }
-    // Fallback if products.js is cached without the size catalog
-    return [
-      {
-        id: "8x10",
-        label: '8" × 10"',
-        price: 159.99,
-        description:
-          "Our 8×10 canvas is the perfect choice for adding a touch of Delaware’s coastal beauty to smaller spaces such as bookshelves, desks, entryways, bathrooms, or gallery walls. Its compact size makes it an affordable gift while still showcasing every vibrant detail of the artwork."
-      },
-      {
-        id: "11x14",
-        label: '11" × 14"',
-        price: 199.99,
-        description:
-          "The 11×14 canvas offers a versatile display size that works beautifully in bedrooms, home offices, kitchens, and hallways. It provides greater visual impact while fitting comfortably into most spaces, making it one of the most popular choices for everyday décor."
-      },
-      {
-        id: "12x12",
-        label: '12" × 12"',
-        price: 199.99,
-        description:
-          "The 12×12 canvas features a contemporary square format that complements modern interiors and is ideal for balanced landscape and wildlife compositions. Its unique proportions make it an excellent accent piece for living rooms, offices, beach homes, or as part of a coordinated gallery wall."
-      },
-      {
-        id: "16x20",
-        label: '16" × 20"',
-        price: 359.99,
-        description:
-          "The 16×20 canvas creates a bold statement and allows the rich colors and intricate details of the artwork to truly shine. Perfect for living rooms, dining rooms, offices, beach houses, and entryways, this larger size becomes an eye-catching centerpiece that brings the beauty of Delaware’s landscapes into any room."
-      }
-    ];
+    return [];
   }
 
   function getSizeById(sizeId) {
@@ -296,7 +266,7 @@
           escapeHtml(p.category) +
           " · " +
           sizeCount +
-          " sizes</p>" +
+          " size & orientation options</p>" +
           '<p class="price">From ' +
           fromPrice +
           "</p>" +
@@ -306,12 +276,96 @@
       .join("");
   }
 
+  function getCheckoutEndpoint() {
+    var config = window.DCA_CONFIG || {};
+    return String(config.checkoutEndpoint || "").trim();
+  }
+
+  /**
+   * Creates a Stripe Checkout Session priced live from product-index.json,
+   * then redirects the shopper to Stripe. Keeps checkout pricing always in
+   * sync with the index — the browser never sends a price.
+   */
+  function startDynamicCheckout(product, size, button) {
+    var endpoint = getCheckoutEndpoint();
+    if (!endpoint) return;
+
+    var original = button.textContent;
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+    button.textContent = "Preparing secure checkout…";
+
+    fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        productId: product.id,
+        productTitle: product.title,
+        imageUrl: product.image,
+        prodigiSku: size.prodigiSku,
+        variantId: size.id,
+        sizeId: size.sizeId || size.id,
+        orientation: size.orientation || "",
+        sizeLabel: size.label
+      })
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          if (!res.ok || !data || !data.url) {
+            throw new Error((data && data.error) || "Checkout unavailable.");
+          }
+          return data.url;
+        });
+      })
+      .then(function (url) {
+        window.location.assign(url);
+      })
+      .catch(function (err) {
+        button.disabled = false;
+        button.removeAttribute("aria-busy");
+        button.textContent = original;
+        var note = mountNoteEl();
+        if (note) {
+          note.textContent =
+            "Sorry, checkout could not start (" +
+            (err && err.message ? err.message : "please try again") +
+            ").";
+        }
+      });
+  }
+
+  function mountNoteEl() {
+    var mount = document.getElementById("stripe-buy");
+    return mount ? mount.querySelector(".stripe-note") : null;
+  }
+
   function initStripeBuy(product, size) {
     var mount = document.getElementById("stripe-buy");
     if (!mount || !product || !size) return;
 
-    var stripe = getStripeForSize(product, size.id);
     var priceLabel = formatPrice(size.price);
+    var endpoint = getCheckoutEndpoint();
+
+    if (endpoint) {
+      mount.innerHTML =
+        '<button type="button" class="btn btn-gold" id="stripe-buy-btn">' +
+        "Purchase — " +
+        priceLabel +
+        "</button>" +
+        '<p class="stripe-note">Secure Stripe checkout for the ' +
+        escapeHtml(size.label) +
+        " canvas. You will be redirected to complete your order.</p>";
+
+      var buyBtn = document.getElementById("stripe-buy-btn");
+      if (buyBtn) {
+        buyBtn.addEventListener("click", function () {
+          startDynamicCheckout(product, size, buyBtn);
+        });
+      }
+      return;
+    }
+
+    var stripe = getStripeForSize(product, size.id);
 
     if (stripe.stripePaymentLink) {
       mount.innerHTML =
@@ -332,7 +386,9 @@
       "Purchase — " +
       priceLabel +
       "</button>" +
-      '<p class="stripe-note">Add GitHub secret <code>STRIPE_SECRET_KEY</code> and run Action <strong>Sync Stripe payment links</strong>.</p>';
+      '<p class="stripe-note">No checkout link yet for the ' +
+      escapeHtml(size.label) +
+      " canvas. Run Action <strong>Sync Stripe payment links</strong> to generate links for the current sizes.</p>";
 
     var setupBtn = document.getElementById("stripe-setup-btn");
     var modal = document.getElementById("stripeSetupModal");
@@ -342,6 +398,55 @@
         modal.setAttribute("aria-hidden", "false");
       });
     }
+  }
+
+  /**
+   * Best-effort: refresh displayed prices from product-index.json so the page
+   * matches the same source checkout uses. Silently keeps the generated prices
+   * if the index can't be reached (e.g. CORS/offline).
+   */
+  function refreshPricesFromIndex(product) {
+    var config = window.DCA_CONFIG || {};
+    var url = String(config.productIndexUrl || "").trim();
+    if (!url) return;
+
+    fetch(url, { headers: { Accept: "application/json" } })
+      .then(function (res) {
+        return res.ok ? res.json() : null;
+      })
+      .then(function (index) {
+        if (!index || !index.products) return;
+        var sizes = getCanvasSizes();
+        var changed = false;
+        sizes.forEach(function (size) {
+          var entry = index.products[size.prodigiSku];
+          var total = entry && entry.build_cost && Number(entry.build_cost.total);
+          if (Number.isFinite(total) && total > 0 && total !== size.price) {
+            size.price = total;
+            changed = true;
+          }
+        });
+        if (changed) applyLivePrices(product);
+      })
+      .catch(function () {
+        /* keep generated prices */
+      });
+  }
+
+  function applyLivePrices(product) {
+    var mount = document.getElementById("product-sizes");
+    if (!mount) return;
+
+    var buttons = mount.querySelectorAll(".size-option");
+    for (var i = 0; i < buttons.length; i++) {
+      var btn = buttons[i];
+      var size = getSizeById(btn.getAttribute("data-size"));
+      var priceSpan = btn.querySelector(".size-option-price");
+      if (size && priceSpan) priceSpan.textContent = formatPrice(size.price);
+    }
+
+    var selected = mount.querySelector(".size-option.is-selected");
+    if (selected) updateProductSelection(product, selected.getAttribute("data-size"));
   }
 
   function updateProductSelection(product, sizeId) {
@@ -386,6 +491,14 @@
     }
   }
 
+  /** Compact label so tiles stay readable in the square grid. */
+  function sizeDimensionsLabel(size) {
+    if (size && size.width && size.height) {
+      return size.width + '" × ' + size.height + '"';
+    }
+    return String((size && size.label) || "").split("·")[0].trim();
+  }
+
   function renderSizePicker(product) {
     var mount = document.getElementById("product-sizes");
     if (!mount || !product) return;
@@ -414,8 +527,13 @@
             (selected ? "true" : "false") +
             '">' +
             '<span class="size-option-label">' +
-            escapeHtml(size.label) +
+            escapeHtml(sizeDimensionsLabel(size)) +
             "</span>" +
+            (size.orientation
+              ? '<span class="size-option-orientation">' +
+                escapeHtml(size.orientation) +
+                "</span>"
+              : "") +
             '<span class="size-option-price">' +
             formatPrice(size.price) +
             "</span>" +
@@ -455,6 +573,7 @@
 
     document.title = product.title + " · Delaware Canvas Art";
     renderSizePicker(product);
+    refreshPricesFromIndex(product);
   }
 
   function initReveals() {

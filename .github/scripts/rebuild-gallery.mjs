@@ -1,17 +1,19 @@
 /**
- * Rebuilds the gallery catalog from https://canvas.xdm.io/products.json
+ * Rebuilds the gallery catalog from the artwork feed and canvas product index.
  *
  * - Removes all gallery product pages (keeps gallery/index.html)
  * - Writes a product detail page for each feed item
- * - Regenerates assets/js/products.js (preserves DCA_CANVAS_SIZES)
+ * - Regenerates assets/js/products.js with every portrait/landscape size
  *
  * All products are listed on gallery/index.html via renderGalleryGrid("gallery-all").
  */
 import fs from "node:fs";
 import path from "node:path";
-import vm from "node:vm";
 
 const FEED_URL = process.env.PRODUCTS_FEED_URL || "https://canvas.xdm.io/products.json";
+const PRODUCT_INDEX_URL =
+  process.env.PRODUCT_INDEX_URL ||
+  "https://canvas.xdm.io/backend/product-index.json";
 const galleryDir = path.resolve("gallery");
 const productsPath = path.resolve("assets/js/products.js");
 
@@ -39,18 +41,62 @@ function uniqueSlug(title, used) {
   return next;
 }
 
-function loadCanvasSizes() {
-  if (!fs.existsSync(productsPath)) {
-    throw new Error(`Missing ${productsPath}`);
+function buildCanvasSizes(productIndex) {
+  const entries = Object.entries(productIndex?.products || {});
+  if (!entries.length) {
+    throw new Error(
+      `Product index at ${PRODUCT_INDEX_URL} has no products object.`
+    );
   }
-  const src = fs.readFileSync(productsPath, "utf8");
-  const ctx = { window: {} };
-  vm.runInNewContext(src, ctx);
-  const sizes = ctx.window.DCA_CANVAS_SIZES;
-  if (!Array.isArray(sizes) || !sizes.length) {
-    throw new Error("Could not load DCA_CANVAS_SIZES from products.js");
-  }
-  return sizes;
+
+  return entries.flatMap(([prodigiSku, product]) => {
+    const width = Number(product?.productDimensions?.width);
+    const height = Number(product?.productDimensions?.height);
+    const price = Number(product?.build_cost?.total);
+    const currency = String(product?.build_cost?.currency || "").toUpperCase();
+
+    if (!Number.isFinite(width) || !Number.isFinite(height)) {
+      throw new Error(`${prodigiSku} has invalid productDimensions.`);
+    }
+    if (!Number.isFinite(price) || price <= 0 || currency !== "USD") {
+      throw new Error(
+        `${prodigiSku} must have a positive USD build_cost.total.`
+      );
+    }
+
+    const baseId = `${width}x${height}`.toLowerCase();
+    return ["portrait", "landscape"].map((orientation) => {
+      const displayWidth = orientation === "portrait" ? width : height;
+      const displayHeight = orientation === "portrait" ? height : width;
+      const pixels = product?.expectedPixels?.master300Dpi?.[orientation];
+      if (!pixels?.width || !pixels?.height) {
+        throw new Error(
+          `${prodigiSku} is missing expectedPixels.master300Dpi.${orientation}.`
+        );
+      }
+
+      return {
+        id: `${baseId}-${orientation}`,
+        sizeId: baseId,
+        label: `${displayWidth}" × ${displayHeight}" · ${
+          orientation === "portrait" ? "Portrait" : "Landscape"
+        }`,
+        price,
+        description: `${displayWidth}×${displayHeight} inch ${orientation} Stretched Canvas on a 38mm Standard Stretcher Bar.`,
+        prodigiSku,
+        orientation,
+        width: displayWidth,
+        height: displayHeight,
+        aspectRatio: product.aspectRatio,
+        masterPixels: {
+          width: Number(pixels.width),
+          height: Number(pixels.height)
+        },
+        buildCostTotal: price,
+        currency
+      };
+    });
+  });
 }
 
 function productPageHtml(productId, cacheBust) {
@@ -60,7 +106,7 @@ function productPageHtml(productId, cacheBust) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Canvas Print · Delaware Canvas Art</title>
-  <meta name="description" content="Premium gallery-wrapped canvas print from Delaware Canvas Art. Choose your size and purchase securely with Stripe.">
+  <meta name="description" content="Premium Stretched Canvas on a 38mm Standard Stretcher Bar print from Delaware Canvas Art. Choose your size and purchase securely with Stripe.">
   <!-- Analytics deferred for mobile PageSpeed -->
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -123,10 +169,10 @@ function productPageHtml(productId, cacheBust) {
           <button type="button" class="btn-close" data-close-modal aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p>The Stripe <strong>Secret key</strong> stays in GitHub Secrets. An Action creates Payment Links with this print’s name, size, and price.</p>
+          <p>This size and orientation has no Stripe Payment Link yet. Links are generated per size from the current catalog and pricing.</p>
           <ol class="mb-3">
-            <li>Add repository secret <code>STRIPE_SECRET_KEY</code> (<code>sk_test_...</code> or <code>sk_live_...</code>).</li>
-            <li>Run Action <strong>Sync Stripe payment links</strong>.</li>
+            <li>Confirm repository secret <code>STRIPE_SECRET_KEY</code> is set (<code>sk_test_...</code> or <code>sk_live_...</code>).</li>
+            <li>Run Action <strong>Sync Stripe payment links</strong> to create links for every size and orientation.</li>
             <li>Reload this page — Purchase will open Stripe checkout.</li>
           </ol>
           <p class="mb-0 small text-secondary">No Cloudflare or other host is required. Never put the Secret key in frontend JS.</p>
@@ -152,10 +198,11 @@ function productPageHtml(productId, cacheBust) {
 
 function writeProductsJs(sizes, products, generatedAt) {
   const banner = `/**
- * Product catalog — four canvas sizes per print.
+ * Product catalog — portrait and landscape canvas variants per print.
  *
  * AUTO-GENERATED by .github/scripts/rebuild-gallery.mjs
- * Source: ${FEED_URL}
+ * Artwork source: ${FEED_URL}
+ * Size/price source: ${PRODUCT_INDEX_URL} (build_cost.total)
  * Generated: ${generatedAt}
  *
  * Checkout: store STRIPE_SECRET_KEY in GitHub Secrets, then run Action
@@ -178,12 +225,12 @@ function writeProductsJs(sizes, products, generatedAt) {
 window.DCA_CANVAS_SIZES = ${JSON.stringify(sizes, null, 2)};
 
 function dcaEmptySizeLinks() {
-  return {
-    "8x10": { stripePaymentLink: "", stripePriceId: "" },
-    "11x14": { stripePaymentLink: "", stripePriceId: "" },
-    "12x12": { stripePaymentLink: "", stripePriceId: "" },
-    "16x20": { stripePaymentLink: "", stripePriceId: "" }
-  };
+  return Object.fromEntries(
+    window.DCA_CANVAS_SIZES.map((size) => [
+      size.id,
+      { stripePaymentLink: "", stripePriceId: "" }
+    ])
+  );
 }
 
 window.DCA_PRODUCTS = [
@@ -206,19 +253,28 @@ function removeProductPages() {
   return removed;
 }
 
-const res = await fetch(FEED_URL, {
-  headers: { Accept: "application/json" }
-});
-if (!res.ok) {
-  throw new Error(`Failed to fetch ${FEED_URL}: HTTP ${res.status}`);
+const [feedRes, productIndexRes] = await Promise.all([
+  fetch(FEED_URL, { headers: { Accept: "application/json" } }),
+  fetch(PRODUCT_INDEX_URL, { headers: { Accept: "application/json" } })
+]);
+if (!feedRes.ok) {
+  throw new Error(`Failed to fetch ${FEED_URL}: HTTP ${feedRes.status}`);
+}
+if (!productIndexRes.ok) {
+  throw new Error(
+    `Failed to fetch ${PRODUCT_INDEX_URL}: HTTP ${productIndexRes.status}`
+  );
 }
 
-const feed = await res.json();
+const [feed, productIndex] = await Promise.all([
+  feedRes.json(),
+  productIndexRes.json()
+]);
 if (!Array.isArray(feed) || !feed.length) {
   throw new Error(`Feed at ${FEED_URL} did not return a non-empty array.`);
 }
 
-const sizes = loadCanvasSizes();
+const sizes = buildCanvasSizes(productIndex);
 const usedSlugs = new Set();
 const products = feed.map((item, index) => {
   const title = String(item?.title || "").trim();
@@ -237,18 +293,19 @@ const products = feed.map((item, index) => {
     title,
     slug: `${id}.html`,
     image,
-    medium: "Gallery-wrapped canvas",
+    medium: "Stretched Canvas on a 38mm Standard Stretcher Bar",
     category: "Featured",
     location: "Sussex County",
     description:
       description ||
-      "Premium gallery-wrapped canvas print from Delaware Canvas Art.",
+      "Premium Stretched Canvas on a 38mm Standard Stretcher Bar print from Delaware Canvas Art.",
     featured: true
   };
 });
 
 const generatedAt = new Date().toISOString();
-const cacheBust = generatedAt.slice(0, 10).replace(/-/g, "");
+// Second-level precision so rebuilding twice in one day still busts caches.
+const cacheBust = generatedAt.replace(/[-:TZ.]/g, "").slice(0, 14);
 
 const removed = removeProductPages();
 writeProductsJs(sizes, products, generatedAt);
@@ -259,6 +316,9 @@ for (const product of products) {
 }
 
 console.log(`Fetched ${feed.length} products from ${FEED_URL}`);
+console.log(
+  `Loaded ${sizes.length} size/orientation variants from ${PRODUCT_INDEX_URL}`
+);
 console.log(`Removed ${removed} old gallery product page(s).`);
 console.log(`Wrote ${products.length} product page(s) and ${productsPath}`);
 console.log("All products are featured on gallery/index.html.");

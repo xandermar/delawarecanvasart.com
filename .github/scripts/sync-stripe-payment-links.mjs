@@ -40,12 +40,6 @@ const forceResync = ["1", "true", "yes"].includes(
 
 /** Prodigi Standard stretched canvas (gallery / image wrap). */
 const PRODIGI_WRAP = "ImageWrap";
-const PRODIGI_SKUS = {
-  "8x10": "GLOBAL-CAN-8X10",
-  "11x14": "GLOBAL-CAN-11X14",
-  "12x12": "GLOBAL-CAN-12X12",
-  "16x20": "GLOBAL-CAN-16X20"
-};
 
 const siteUrl = (
   process.env.SITE_URL || "https://www.delawarecanvasart.com"
@@ -58,14 +52,18 @@ console.log(
   `Stripe mode: ${stripeMode}${forceResync ? " (FORCE_RESYNC enabled)" : ""}`
 );
 
-function prodigiForSize(sizeId) {
-  const sku = PRODIGI_SKUS[sizeId];
+function prodigiForSize(size) {
+  const sku = String(size?.prodigiSku || "").trim();
   if (!sku) {
     throw new Error(
-      `No Prodigi SKU mapped for size "${sizeId}". Add it to PRODIGI_SKUS.`
+      `No Prodigi SKU mapped for size variant "${size?.id || "unknown"}".`
     );
   }
-  return { sku, wrap: PRODIGI_WRAP };
+  return {
+    sku,
+    wrap: PRODIGI_WRAP,
+    orientation: String(size.orientation || "").toLowerCase()
+  };
 }
 
 async function stripe(method, urlPath, params) {
@@ -138,9 +136,15 @@ function loadExisting() {
 }
 
 /** Keep prior entry only when it matches the current Stripe mode and reuse is allowed. */
-function reusableEntry(existing) {
+function reusableEntry(existing, expectedPrice) {
   if (forceResync) return {};
   if (!existing?.url || !existing?.priceId || !existing?.paymentLinkId) return {};
+  if (Number(existing.price) !== Number(expectedPrice)) {
+    console.log(
+      `Price changed from ${existing.price} to ${expectedPrice}; creating a new link.`
+    );
+    return {};
+  }
   const linkMode = detectLinkMode(existing);
   if (linkMode && linkMode !== stripeMode) {
     console.log(
@@ -153,7 +157,7 @@ function reusableEntry(existing) {
 
 async function ensurePrice(product, size, existing) {
   const dcaSku = `${product.id}:${size.id}`;
-  const prodigi = prodigiForSize(size.id);
+  const prodigi = prodigiForSize(size);
   const meta = fulfillmentMetadata(product, size);
 
   if (existing?.priceId) {
@@ -170,7 +174,7 @@ async function ensurePrice(product, size, existing) {
   params.set("name", `${product.title} — ${size.label}`);
   params.set(
     "description",
-    `Gallery-wrapped canvas · ${size.label} · Delaware Canvas Art`
+    `Stretched Canvas on a 38mm Standard Stretcher Bar · ${size.label} · Delaware Canvas Art`
   );
   for (const [key, value] of Object.entries(meta)) {
     params.set(`metadata[${key}]`, value);
@@ -198,13 +202,15 @@ async function ensurePrice(product, size, existing) {
 
 /** Metadata keys expected by the Stripe → Prodigi fulfill webhook. */
 function fulfillmentMetadata(product, size) {
-  const prodigi = prodigiForSize(size.id);
+  const prodigi = prodigiForSize(size);
   const imageUrl = String(product.image || "").trim();
   if (!imageUrl) {
     throw new Error(`Product "${product.id}" is missing image URL for Prodigi.`);
   }
   return {
-    size_id: size.id,
+    size_id: size.sizeId || size.id,
+    variant_id: size.id,
+    orientation: prodigi.orientation,
     prodigi_sku: prodigi.sku,
     prodigi_wrap: prodigi.wrap,
     image_url: imageUrl,
@@ -226,7 +232,7 @@ function paymentLinkMetadata(product, size) {
 }
 
 async function ensurePaymentLink(priceId, product, size, existing) {
-  const prodigi = prodigiForSize(size.id);
+  const prodigi = prodigiForSize(size);
 
   if (existing?.url && existing?.paymentLinkId) {
     // Keep the buy URL; refresh checkout settings and Prodigi metadata.
@@ -259,7 +265,7 @@ async function ensurePaymentLink(priceId, product, size, existing) {
 
 const { products, sizes } = loadCatalog();
 for (const size of sizes) {
-  prodigiForSize(size.id); // fail fast if a catalog size lacks a Prodigi SKU
+  prodigiForSize(size); // fail fast if a catalog size lacks a Prodigi SKU
 }
 
 const existingAll = loadExisting();
@@ -270,9 +276,12 @@ let reused = 0;
 for (const product of products) {
   result[product.id] = {};
   for (const size of sizes) {
-    const prev = reusableEntry(existingAll[product.id]?.[size.id] || {});
+    const prev = reusableEntry(
+      existingAll[product.id]?.[size.id] || {},
+      size.price
+    );
     const wasReuse = Boolean(prev.priceId && prev.url);
-    const prodigi = prodigiForSize(size.id);
+    const prodigi = prodigiForSize(size);
     const priceId = await ensurePrice(product, size, prev);
     const link = await ensurePaymentLink(priceId, product, size, prev);
     if (wasReuse) reused += 1;
@@ -284,7 +293,8 @@ for (const product of products) {
       name: product.title,
       size: size.label,
       price: size.price,
-      size_id: size.id,
+      size_id: size.sizeId || size.id,
+      orientation: prodigi.orientation,
       prodigi_sku: prodigi.sku,
       prodigi_wrap: prodigi.wrap,
       image_url: String(product.image || ""),

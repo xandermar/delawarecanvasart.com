@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Canvas Print · Delaware Canvas Art</title>
-  <meta name="description" content="Premium gallery-wrapped canvas print from Delaware Canvas Art. Choose your size and purchase securely with Stripe.">
+  <meta name="description" content="Premium Stretched Canvas on a 38mm Standard Stretcher Bar print from Delaware Canvas Art. Choose your size and purchase securely with Stripe.">
   <!-- Analytics deferred for mobile PageSpeed -->
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -31,7 +31,7 @@
   <link rel="preload" href="../assets/fonts/source-sans-3-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="../assets/fonts/cormorant-garamond-600-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
-  <link rel="stylesheet" href="../assets/css/styles.css?v=20260728">
+  <link rel="stylesheet" href="../assets/css/styles.css?v=20260730162040">
 </head>
 <body data-product="sanderling-bird-by-the-shore">
   <div id="site-nav"></div>
@@ -67,10 +67,10 @@
           <button type="button" class="btn-close" data-close-modal aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p>The Stripe <strong>Secret key</strong> stays in GitHub Secrets. An Action creates Payment Links with this print’s name, size, and price.</p>
+          <p>This size and orientation has no Stripe Payment Link yet. Links are generated per size from the current catalog and pricing.</p>
           <ol class="mb-3">
-            <li>Add repository secret <code>STRIPE_SECRET_KEY</code> (<code>sk_test_...</code> or <code>sk_live_...</code>).</li>
-            <li>Run Action <strong>Sync Stripe payment links</strong>.</li>
+            <li>Confirm repository secret <code>STRIPE_SECRET_KEY</code> is set (<code>sk_test_...</code> or <code>sk_live_...</code>).</li>
+            <li>Run Action <strong>Sync Stripe payment links</strong> to create links for every size and orientation.</li>
             <li>Reload this page — Purchase will open Stripe checkout.</li>
           </ol>
           <p class="mb-0 small text-secondary">No Cloudflare or other host is required. Never put the Secret key in frontend JS.</p>
@@ -85,9 +85,9 @@
 
   <div id="site-footer"></div>
 
-  <script src="../assets/js/config.js?v=20260728" defer></script>
-  <script src="../assets/js/products.js?v=20260728" defer></script>
-  <script src="../assets/js/stripe-links.generated.js?v=20260729192117" defer></script>
-  <script src="../assets/js/main.js?v=20260728" defer></script>
+  <script src="../assets/js/config.js?v=20260730162040" defer></script>
+  <script src="../assets/js/products.js?v=20260730162040" defer></script>
+  <script src="../assets/js/stripe-links.generated.js?v=20260730162040" defer></script>
+  <script src="../assets/js/main.js?v=20260730162040" defer></script>
 </body>
 </html>
