@@ -15,7 +15,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "8x10-portrait",
     "sizeId": "8x10",
-    "label": "8\" wide by 10\" high · Portrait",
+    "label": "8in wide by 10in high · Portrait",
     "price": 89.99,
     "description": "8×10 inch portrait Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-8X10",
@@ -33,7 +33,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "8x10-landscape",
     "sizeId": "8x10",
-    "label": "10\" wide by 8\" high · Landscape",
+    "label": "10in wide by 8in high · Landscape",
     "price": 89.99,
     "description": "10×8 inch landscape Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-8X10",
@@ -51,7 +51,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "11x14-portrait",
     "sizeId": "11x14",
-    "label": "11\" wide by 14\" high · Portrait",
+    "label": "11in wide by 14in high · Portrait",
     "price": 99.99,
     "description": "11×14 inch portrait Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-11X14",
@@ -69,7 +69,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "11x14-landscape",
     "sizeId": "11x14",
-    "label": "14\" wide by 11\" high · Landscape",
+    "label": "14in wide by 11in high · Landscape",
     "price": 99.99,
     "description": "14×11 inch landscape Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-11X14",
@@ -87,7 +87,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "12x12-portrait",
     "sizeId": "12x12",
-    "label": "12\" wide by 12\" high · Portrait",
+    "label": "12in wide by 12in high · Portrait",
     "price": 97.99,
     "description": "12×12 inch portrait Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-12X12",
@@ -105,7 +105,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "12x12-landscape",
     "sizeId": "12x12",
-    "label": "12\" wide by 12\" high · Landscape",
+    "label": "12in wide by 12in high · Landscape",
     "price": 97.99,
     "description": "12×12 inch landscape Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-12X12",
@@ -123,7 +123,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "12x16-portrait",
     "sizeId": "12x16",
-    "label": "12\" wide by 16\" high · Portrait",
+    "label": "12in wide by 16in high · Portrait",
     "price": 103.99,
     "description": "12×16 inch portrait Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-12X16",
@@ -141,7 +141,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "12x16-landscape",
     "sizeId": "12x16",
-    "label": "16\" wide by 12\" high · Landscape",
+    "label": "16in wide by 12in high · Landscape",
     "price": 103.99,
     "description": "16×12 inch landscape Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-12X16",
@@ -159,7 +159,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "12x36-portrait",
     "sizeId": "12x36",
-    "label": "12\" wide by 36\" high · Portrait",
+    "label": "12in wide by 36in high · Portrait",
     "price": 157.99,
     "description": "12×36 inch portrait Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-12X36",
@@ -177,7 +177,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "12x36-landscape",
     "sizeId": "12x36",
-    "label": "36\" wide by 12\" high · Landscape",
+    "label": "36in wide by 12in high · Landscape",
     "price": 157.99,
     "description": "36×12 inch landscape Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-12X36",
@@ -195,7 +195,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "16x16-portrait",
     "sizeId": "16x16",
-    "label": "16\" wide by 16\" high · Portrait",
+    "label": "16in wide by 16in high · Portrait",
     "price": 113.99,
     "description": "16×16 inch portrait Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-16X16",
@@ -213,7 +213,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "16x16-landscape",
     "sizeId": "16x16",
-    "label": "16\" wide by 16\" high · Landscape",
+    "label": "16in wide by 16in high · Landscape",
     "price": 113.99,
     "description": "16×16 inch landscape Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-16X16",
@@ -231,7 +231,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "16x20-portrait",
     "sizeId": "16x20",
-    "label": "16\" wide by 20\" high · Portrait",
+    "label": "16in wide by 20in high · Portrait",
     "price": 122.99,
     "description": "16×20 inch portrait Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-16X20",
@@ -249,7 +249,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "16x20-landscape",
     "sizeId": "16x20",
-    "label": "20\" wide by 16\" high · Landscape",
+    "label": "20in wide by 16in high · Landscape",
     "price": 122.99,
     "description": "20×16 inch landscape Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-16X20",
@@ -267,7 +267,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "20x20-portrait",
     "sizeId": "20x20",
-    "label": "20\" wide by 20\" high · Portrait",
+    "label": "20in wide by 20in high · Portrait",
     "price": 136.99,
     "description": "20×20 inch portrait Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-20X20",
@@ -285,7 +285,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "20x20-landscape",
     "sizeId": "20x20",
-    "label": "20\" wide by 20\" high · Landscape",
+    "label": "20in wide by 20in high · Landscape",
     "price": 136.99,
     "description": "20×20 inch landscape Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-20X20",
@@ -303,7 +303,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "20x24-portrait",
     "sizeId": "20x24",
-    "label": "20\" wide by 24\" high · Portrait",
+    "label": "20in wide by 24in high · Portrait",
     "price": 148.99,
     "description": "20×24 inch portrait Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-20X24",
@@ -321,7 +321,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "20x24-landscape",
     "sizeId": "20x24",
-    "label": "24\" wide by 20\" high · Landscape",
+    "label": "24in wide by 20in high · Landscape",
     "price": 148.99,
     "description": "24×20 inch landscape Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-20X24",
@@ -339,7 +339,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "20x30-portrait",
     "sizeId": "20x30",
-    "label": "20\" wide by 30\" high · Portrait",
+    "label": "20in wide by 30in high · Portrait",
     "price": 165.99,
     "description": "20×30 inch portrait Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-20X30",
@@ -357,7 +357,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "20x30-landscape",
     "sizeId": "20x30",
-    "label": "30\" wide by 20\" high · Landscape",
+    "label": "30in wide by 20in high · Landscape",
     "price": 165.99,
     "description": "30×20 inch landscape Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-20X30",
@@ -375,7 +375,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "24x32-portrait",
     "sizeId": "24x32",
-    "label": "24\" wide by 32\" high · Portrait",
+    "label": "24in wide by 32in high · Portrait",
     "price": 169.99,
     "description": "24×32 inch portrait Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-24X32",
@@ -393,7 +393,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "24x32-landscape",
     "sizeId": "24x32",
-    "label": "32\" wide by 24\" high · Landscape",
+    "label": "32in wide by 24in high · Landscape",
     "price": 169.99,
     "description": "32×24 inch landscape Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-24X32",
@@ -411,7 +411,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "24x36-portrait",
     "sizeId": "24x36",
-    "label": "24\" wide by 36\" high · Portrait",
+    "label": "24in wide by 36in high · Portrait",
     "price": 189.99,
     "description": "24×36 inch portrait Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-24X36",
@@ -429,7 +429,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "24x36-landscape",
     "sizeId": "24x36",
-    "label": "36\" wide by 24\" high · Landscape",
+    "label": "36in wide by 24in high · Landscape",
     "price": 189.99,
     "description": "36×24 inch landscape Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-24X36",
@@ -447,7 +447,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "30x40-portrait",
     "sizeId": "30x40",
-    "label": "30\" wide by 40\" high · Portrait",
+    "label": "30in wide by 40in high · Portrait",
     "price": 251.99,
     "description": "30×40 inch portrait Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-30X40",
@@ -465,7 +465,7 @@ window.DCA_CANVAS_SIZES = [
   {
     "id": "30x40-landscape",
     "sizeId": "30x40",
-    "label": "40\" wide by 30\" high · Landscape",
+    "label": "40in wide by 30in high · Landscape",
     "price": 251.99,
     "description": "40×30 inch landscape Stretched Canvas on a 38mm Standard Stretcher Bar.",
     "prodigiSku": "GLOBAL-CAN-30X40",
