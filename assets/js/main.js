@@ -561,7 +561,7 @@
   /** Compact label so tiles stay readable in the square grid. */
   function sizeDimensionsLabel(size) {
     if (size && size.width && size.height) {
-      return size.width + '" × ' + size.height + '"';
+      return size.width + '" wide by ' + size.height + '" high';
     }
     return String((size && size.label) || "").split("·")[0].trim();
   }

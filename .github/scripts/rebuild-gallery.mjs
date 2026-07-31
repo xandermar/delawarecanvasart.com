@@ -78,7 +78,7 @@ function buildCanvasSizes(productIndex) {
       return {
         id: `${baseId}-${orientation}`,
         sizeId: baseId,
-        label: `${displayWidth}" × ${displayHeight}" · ${
+        label: `${displayWidth}" wide by ${displayHeight}" high · ${
           orientation === "portrait" ? "Portrait" : "Landscape"
         }`,
         price,
