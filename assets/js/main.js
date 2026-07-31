@@ -491,6 +491,73 @@
     }
   }
 
+  function isSquareSize(size) {
+    if (!size) return false;
+    if (String(size.aspectRatio || "") === "1:1") return true;
+    return Number(size.width) > 0 && Number(size.width) === Number(size.height);
+  }
+
+  /**
+   * Classify artwork as landscape, portrait, or square from its pixel ratio.
+   * Near-square images (within 5%) count as square.
+   */
+  function classifyAspect(width, height) {
+    var w = Number(width) || 0;
+    var h = Number(height) || 0;
+    if (!w || !h) return "landscape";
+    var ratio = w / h;
+    if (Math.abs(ratio - 1) < 0.05) return "square";
+    return ratio > 1 ? "landscape" : "portrait";
+  }
+
+  function detectImageOrientation(src, done) {
+    if (!src) {
+      done("landscape");
+      return;
+    }
+    var img = new Image();
+    img.onload = function () {
+      done(classifyAspect(img.naturalWidth, img.naturalHeight));
+    };
+    img.onerror = function () {
+      done("landscape");
+    };
+    img.src = src;
+  }
+
+  /** Size options that match the artwork orientation (no portrait/landscape/square mix). */
+  function getSizesForImageOrientation(orientation) {
+    var sizes = getCanvasSizes();
+    var wanted = String(orientation || "landscape").toLowerCase();
+
+    if (wanted === "square") {
+      var seen = {};
+      return sizes.filter(function (size) {
+        if (!isSquareSize(size)) return false;
+        var key = size.sizeId || size.id;
+        if (seen[key]) return false;
+        seen[key] = true;
+        return true;
+      });
+    }
+
+    return sizes.filter(function (size) {
+      if (isSquareSize(size)) return false;
+      return String(size.orientation || "").toLowerCase() === wanted;
+    });
+  }
+
+  function pickDefaultSizeId(sizes) {
+    var config = window.DCA_CONFIG || {};
+    var preferred = config.defaultSizeId;
+    if (preferred) {
+      for (var i = 0; i < sizes.length; i++) {
+        if (sizes[i].id === preferred) return preferred;
+      }
+    }
+    return sizes[0] ? sizes[0].id : null;
+  }
+
   /** Compact label so tiles stay readable in the square grid. */
   function sizeDimensionsLabel(size) {
     if (size && size.width && size.height) {
@@ -499,16 +566,22 @@
     return String((size && size.label) || "").split("·")[0].trim();
   }
 
-  function renderSizePicker(product) {
+  function renderSizePicker(product, imageOrientation) {
     var mount = document.getElementById("product-sizes");
     if (!mount || !product) return;
 
-    var sizes = getCanvasSizes();
-    if (!sizes.length) return;
+    var sizes = getSizesForImageOrientation(imageOrientation || "landscape");
+    if (!sizes.length) {
+      mount.innerHTML =
+        '<div class="size-picker">' +
+        '<p class="size-picker-title" id="size-picker-label">Choose canvas size</p>' +
+        '<p class="stripe-note">No matching canvas sizes for this image orientation.</p>' +
+        "</div>";
+      return;
+    }
 
-    var config = window.DCA_CONFIG || {};
-    var defaultId = config.defaultSizeId || sizes[0].id;
-    if (!getSizeById(defaultId)) defaultId = sizes[0].id;
+    var defaultId = pickDefaultSizeId(sizes);
+    var showOrientation = String(imageOrientation || "") === "square";
 
     // Button grid avoids Bootstrap fieldset/legend collapse bugs on iOS Safari
     mount.innerHTML =
@@ -529,10 +602,8 @@
             '<span class="size-option-label">' +
             escapeHtml(sizeDimensionsLabel(size)) +
             "</span>" +
-            (size.orientation
-              ? '<span class="size-option-orientation">' +
-                escapeHtml(size.orientation) +
-                "</span>"
+            (showOrientation
+              ? '<span class="size-option-orientation">Square</span>'
               : "") +
             '<span class="size-option-price">' +
             formatPrice(size.price) +
@@ -543,13 +614,13 @@
         .join("") +
       "</div></div>";
 
-    mount.addEventListener("click", function (event) {
+    mount.onclick = function (event) {
       var btn = event.target.closest(".size-option");
       if (!btn || !mount.contains(btn)) return;
       var sizeId = btn.getAttribute("data-size");
       setSelectedSizeButton(mount, sizeId);
       updateProductSelection(product, sizeId);
-    });
+    };
 
     updateProductSelection(product, defaultId);
   }
@@ -561,19 +632,33 @@
     var titleEl = document.getElementById("product-title");
     var descEl = document.getElementById("product-description");
     var imgEl = document.getElementById("product-image");
+    var sizesMount = document.getElementById("product-sizes");
+    var imageSrc = productImageSrc(product, 900);
 
     if (titleEl) titleEl.textContent = product.title;
     if (descEl) descEl.textContent = product.description;
     if (imgEl) {
-      imgEl.src = productImageSrc(product, 900);
+      imgEl.src = imageSrc;
       imgEl.alt = product.title;
       imgEl.setAttribute("fetchpriority", "high");
       imgEl.setAttribute("decoding", "async");
     }
 
     document.title = product.title + " · Delaware Canvas Art";
-    renderSizePicker(product);
-    refreshPricesFromIndex(product);
+
+    if (sizesMount) {
+      sizesMount.innerHTML =
+        '<div class="size-picker">' +
+        '<p class="size-picker-title">Choose canvas size</p>' +
+        '<p class="stripe-note">Matching sizes to this artwork…</p>' +
+        "</div>";
+    }
+
+    detectImageOrientation(imageSrc, function (orientation) {
+      product.imageOrientation = orientation;
+      renderSizePicker(product, orientation);
+      refreshPricesFromIndex(product);
+    });
   }
 
   function initReveals() {
