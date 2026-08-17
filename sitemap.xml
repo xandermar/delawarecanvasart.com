@@ -55,12 +55,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.delawarecanvasart.com/gallery/candy-kitchen-storefront-2.html</loc>
-    <lastmod>2026-08-17</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://www.delawarecanvasart.com/gallery/candy-kitchen-storefront.html</loc>
     <lastmod>2026-08-17</lastmod>
     <changefreq>weekly</changefreq>
@@ -110,6 +104,12 @@
   </url>
   <url>
     <loc>https://www.delawarecanvasart.com/gallery/sanderling-bird-by-the-shore.html</loc>
+    <lastmod>2026-08-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.delawarecanvasart.com/gallery/scenic-beach-pathway.html</loc>
     <lastmod>2026-08-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
